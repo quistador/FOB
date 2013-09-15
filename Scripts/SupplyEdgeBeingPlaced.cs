@@ -20,6 +20,7 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 
         this.transform.position = Vector3.zero;
         this.transform.Translate(new Vector3(0f,0f,-0.03f));
+        this._networkReference = new SupplyNetwork(Vector3.zero);
     }
 
     // Update is called once per frame
@@ -43,9 +44,11 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 	        endPos.z = 0;
 	
 	        Vector3 startPos = this.startPos;
+	        int nearestNodeId = this._networkReference.nearestNeighborNode(endPos);
+	        startPos = this._networkReference.NodeForId(nearestNodeId).Position;
+	        
 	        this.transform.position = new Vector3(startPos.x,startPos.y, -0.03f);
 	        
-	
 	        float x = endPos.x - startPos.x;
 	        float y = endPos.y - startPos.y;
 	        float theta = -((float)System.Math.Atan(x/y) * (180f / Mathf.PI) - 90f);
@@ -85,4 +88,10 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 			throw;
 		}
     }
+    
+    private SupplyNetwork _networkReference;
+	public SupplyNetwork networkReference
+	{
+		set{ this._networkReference = value; }
+	}
 }

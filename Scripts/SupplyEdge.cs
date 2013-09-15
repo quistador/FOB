@@ -10,14 +10,14 @@ public class SupplyEdge : MonoBehaviour
     void Start () 
     {
     	this.startPos = Vector3.zero;
-  }
+    }
 
     /// <summary>
     /// Initialize this instance. 
     /// </summary>
     public void Initialize(Vector3 startPos, Vector3 endPos)
     {
-    	Debug.Log(string.Format("setting startPos for new edge: {0}", startPos));
+    	//Debug.Log(string.Format("setting startPos for new edge: {0}", startPos));
     	//this.transform.position = startPos;
     	this.startPos = startPos;
 		this.endPos = endPos;
