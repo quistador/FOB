@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections;
 
 public class SupplyEdge : MonoBehaviour 
@@ -28,18 +29,9 @@ public class SupplyEdge : MonoBehaviour
             this.gameObject);
 
         this.transform.Translate(new Vector3(0f,0f,-0.03f));
-        float x = endPos.x - startPos.x;
-        float y = endPos.y - startPos.y;
-        float theta = -((float)System.Math.Atan(x/y) * (180f / Mathf.PI) - 90f);
 
-        float lengthFromOriginToEndpoint = Vector3.Distance(startPos,endPos);
-
-        // inverse tangent range is from -pi/2 to pi/2, which doesn't cover the full
-        // 360 degrees of rotation that we need. 
-        if(endPos.y < startPos.y)
-        {
-            theta = theta + 180f;
-        }
+		float theta = SupplyEdge.calculateRotationForEdge(startPos,endPos);
+        float lengthFromOriginToEndpoint = SupplyEdge.calculateScaleForEdge(startPos,endPos);
 
         MeshFilter mesh = this.gameObject.GetComponent<MeshFilter>();
         //this.transform.localPosition = new Vector3(0f,-0.05f,0f);
@@ -52,6 +44,41 @@ public class SupplyEdge : MonoBehaviour
         mesh.transform.localScale = new Vector3(lengthFromOriginToEndpoint, mesh.transform.localScale.y, mesh.transform.localScale.z);
         this.transform.position = new Vector3(startPos.x,startPos.y, -0.03f);
     }
+    
+	public static float calculateRotationForEdge(Vector3 startPos, Vector3 endPos)
+	{
+		float x = endPos.x - startPos.x;
+        float y = endPos.y - startPos.y;
+        float theta = -((float)System.Math.Atan(x/y) * (180f / Mathf.PI) - 90f);
+
+        // in the event that endPos == startPos, we'll get NaN values for theta. 
+        if(float.IsNaN(theta))
+        {
+            theta = 0.0f;
+        }
+
+        // inverse tangent range is from -pi/2 to pi/2, which doesn't cover the full
+        // 360 degrees of rotation that we need. 
+        if(endPos.y < startPos.y)
+        {
+            theta = theta + 180f;
+        }
+        
+		return theta;
+	}
+	
+	public static float calculateScaleForEdge(Vector3 startPos, Vector3 endPos)
+	{
+		float x = endPos.x - startPos.x;
+        float y = endPos.y - startPos.y;
+
+        float maxEdgeDistance = 0.5f;
+        float lengthFromOriginToEndpoint = Math.Min(
+            Vector3.Distance(startPos,endPos),
+            maxEdgeDistance );
+
+        return lengthFromOriginToEndpoint;	
+	}
 
     // Update is called once per frame
     void Update () 

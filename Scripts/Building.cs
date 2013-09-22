@@ -10,18 +10,31 @@ public class Building : MonoBehaviour
     void Start () 
     {
 
-        PlaneMeshTools.CreatePlane(10f, 10f, 1, 1, material, this.gameObject);
+        //PlaneMeshTools.CreatePlane(10f, 10f, 1, 1, material, this.gameObject);
         PlaneMeshTools.CreatePlane(
                 buildingWidth,buildingWidth,
                 2,2,
                 this.material,
                 this.gameObject);
 
-
         this.gameObject.AddComponent<MeshCollider>();
         MeshCollider collider = this.gameObject.GetComponent<MeshCollider>();
         MeshFilter mesh = this.gameObject.GetComponent<MeshFilter>();
         collider.sharedMesh = mesh.sharedMesh;
+        this._entryPointPositions = new List<Vector3>();
+        
+        Object doorResource = Resources.Load(@"Door");
+        Vector3 doorPosition = new Vector3(
+			this.transform.position.x + mesh.sharedMesh.bounds.center.x,
+			this.transform.position.y,
+			-0.01f);
+        
+        GameObject doorObject = Object.Instantiate(
+			doorResource, 
+			doorPosition, 
+			Quaternion.identity) as GameObject;
+			
+        Door door = doorObject.GetComponent(typeof(SupplyEdge)) as Door;
     }
 
     // Update is called once per frame
@@ -51,4 +64,13 @@ public class Building : MonoBehaviour
     }
 
     public static float buildingWidth = 0.6f;
+    
+    private List<Vector3> _entryPointPositions;
+	public List<Vector3> EntryPointPositions
+	{
+		get
+		{
+			return this._entryPointPositions;
+		}
+	}
 }

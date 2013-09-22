@@ -38,7 +38,7 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 	        Vector2 mousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
 	
 	        Vector3 endPos = TopDownCamera.ScreenToWorldPoint(mousePosition);
-	
+	        
 	        // since we're in 2d land, we don't need the z coord.  Additionally, ScreenToWorldPoint
 	        // might have set this to some non-zero value, which will screw up our distance calculations later. 
 	        endPos.z = 0;
@@ -47,30 +47,11 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 	        int nearestNodeId = this._networkReference.nearestNeighborNode(endPos);
 	        startPos = this._networkReference.NodeForId(nearestNodeId).Position;
 	        
-	        this.transform.position = new Vector3(startPos.x,startPos.y, -0.03f);
-	        
-	        float x = endPos.x - startPos.x;
-	        float y = endPos.y - startPos.y;
-	        float theta = -((float)System.Math.Atan(x/y) * (180f / Mathf.PI) - 90f);
-	        
-			// in the event that endPos == startPos, we'll get NaN values for theta. 
-	        if(float.IsNaN(theta))
-			{
-				theta = 0.0f;
-			}
-	
-	        float lengthFromOriginToEndpoint = Vector3.Distance(startPos,endPos);
-	
-	        // inverse tangent range is from -pi/2 to pi/2, which doesn't cover the full
-	        // 360 degrees of rotation that we need. 
-	        if(endPos.y < startPos.y)
-	        {
-	            theta = theta + 180f;
-	        }
+			float theta = SupplyEdge.calculateRotationForEdge(startPos,endPos);
+	        float lengthFromOriginToEndpoint = SupplyEdge.calculateScaleForEdge(startPos,endPos);
 	
 	        MeshFilter mesh = this.gameObject.GetComponent<MeshFilter>();
 	        //this.transform.localPosition = new Vector3(0f,-0.05f,0f);
-	        this.transform.rotation = Quaternion.identity;
 	        this.transform.RotateAround(
 	                startPos,
 	                new Vector3(0,0,1),
@@ -81,6 +62,8 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 				lengthFromOriginToEndpoint, 
 				mesh.transform.localScale.y, 
 				mesh.transform.localScale.z);
+				
+	        this.transform.position = new Vector3(startPos.x,startPos.y, -0.03f);
 		}
 		catch(Exception)
 		{

@@ -78,9 +78,9 @@ public class GamePlayState
 
             Vector2 mousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
             Vector3 worldPositionForMouse = TopDownCamera.ScreenToWorldPoint(mousePosition);
-            this.supplyLines.AddEdge(worldPositionForMouse);
+            Vector3 endPointOfLastEdge = this.supplyLines.AddEdge(worldPositionForMouse);
             this.IntermediateEdge.networkReference = this.supplyLines;
-            this.IntermediateEdge.startPos = worldPositionForMouse;
+            this.IntermediateEdge.startPos = endPointOfLastEdge ;
         }
         else if (this.CurrentInputState == CommandState.RequisitionSoldiers)
         {
