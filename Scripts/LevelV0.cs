@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class LevelV0 : MonoBehaviour 
 {
@@ -10,13 +11,12 @@ public class LevelV0 : MonoBehaviour
 
     private GamePlayState gamePlayState;
 
-    private List<Building> buildings;
+    private static List<Building> buildings;
 
     // Use this for initialization
     void Start () 
     {
         buildings = new List<Building>();
-        gamePlayState = new GamePlayState();
 
         Object obj = Resources.Load (@"Building");
         if(obj == null)
@@ -123,6 +123,7 @@ public class LevelV0 : MonoBehaviour
             buildings.Add(b3);
             buildings.Add(b4);
 
+            buildings.ForEach(b=>b.Start());
             GameObject blockObject = new GameObject("block");
             blockObject.transform.position = currentBlockPosition;
             Mesh block = PlaneMeshTools.CreatePlane(
@@ -131,6 +132,8 @@ public class LevelV0 : MonoBehaviour
                     cityBlockMaterial, 
                     blockObject);
         }
+
+        gamePlayState = new GamePlayState();
     }
 
     // Update is called once per frame
@@ -138,5 +141,52 @@ public class LevelV0 : MonoBehaviour
     {
         this.gamePlayState.CurrentMouseWorldCoordinate = new Vector3((float)Input.mousePosition.x, (float)Input.mousePosition.y, 0f);
         this.gamePlayState.UpdateState();
+    }
+
+    public static List<Vector3> GetEntryPointPositionsInLevel()
+    {
+        List<Vector3> doorPositions = buildings.SelectMany( building => 
+                {
+                // problem:  if we use the door position as the entry point position (which initially seems like the 
+                // logical thing to do), then our 'supplyEdgeBeingPlaced' will intersect with the building (since it starts
+                // at the entry point positions that we return from this function).  If it intersects, then the edge will 
+                // be marked as 'invalid', because we don't want to allow edges that intersect with buildings. So, how do we solve?
+                // we'll start with a naive approach, where we move the entry point outward from the bounds-center of the building, 
+                // along the vector that travels from the bounds center to the door position:  
+                //
+                //                               o  <---(adjusted door position)
+                //                             /
+                //                           /
+                // |---------------------|-x-|-|    <---(original door position)
+                // |                     /     |
+                // |                   /       |
+                // |                 /         |
+                // |               /           |
+                // |             x             |
+                // |        (bounds center)    |
+                // |                           |
+                // |                           |
+                // |                           |
+                // |___________________________|
+                //
+                // this *will* look weird for certain door positions and this shouldn't be a permanent solution. 
+                    MeshCollider collider = building.gameObject.GetComponent<MeshCollider>();
+                    Vector3 buildingCenter = collider.bounds.center;
+                    List<Vector3> originalDoorPositions = building.EntryPointPositions;
+
+                    List<Vector3> adjustedDoorPositions = originalDoorPositions.Select(door => 
+                        {
+                            // get the vector from the center to the door. 
+                            Vector3 centerToDoor = buildingCenter - door;
+                            centerToDoor.Normalize();
+                            centerToDoor = centerToDoor * 0.01f;
+                            return door - centerToDoor;
+
+                        }).ToList();
+
+                    return adjustedDoorPositions;
+                }).ToList();
+
+        return doorPositions;
     }
 }

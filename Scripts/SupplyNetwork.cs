@@ -19,11 +19,23 @@ public class SupplyNetwork
     {
         NetworkNodes = new SortedDictionary<int, SupplyNode>();
         NetworkConnections = new Dictionary<int, List<int>>();
+        int nodeId = 0;
+
+        // each building entry point needs to be a node in our network, so 
+        // grab each door's position and add them as a node. 
+        List<Vector3> buildingEntryPointPositions = LevelV0.GetEntryPointPositionsInLevel();
 
         // the first node always has id=0. 
         this.NetworkNodes.Add (
-                0, 
+                nodeId, 
                 new SupplyNetwork.SupplyNode(startPos));
+
+        nodeId = nodeId + 1;
+        buildingEntryPointPositions.ForEach( position => 
+                {
+                this.NetworkNodes.Add(nodeId,new SupplyNetwork.SupplyNode(position));
+                nodeId = nodeId + 1;
+                });
 
         // create an initial node at startPos. 
         this.InstantiateNodeObject(startPos);
