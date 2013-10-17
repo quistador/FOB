@@ -26,11 +26,11 @@ public class EventQueue
         {
             _events.Remove(inEvent);
         }
-        
+
         if(inactiveEvents.Count > 0)
-		{
-		    //Debug.Log(string.Format("{0} events will be removed",inactiveEvents.Count)); 
-	        //Debug.Log(string.Format("{0} events remaining after removal", _events.Count));
-		}
+        {
+            //Debug.Log(string.Format("{0} events will be removed",inactiveEvents.Count)); 
+            //Debug.Log(string.Format("{0} events remaining after removal", _events.Count));
+        }
     }
 }
