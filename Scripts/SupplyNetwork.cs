@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -170,6 +171,107 @@ public class SupplyNetwork
         public Vector3 Position { get; set; }
     }
 
+    public List<int> shortestPath(int startId, int endId)
+    {
+        if(this.NetworkNodes.Count == 0 )
+        {
+            return null;
+        }
+        SupplyNode end = this.NetworkNodes[endId];
+
+        Dictionary<int, int> cameFrom = new Dictionary<int, int>();
+        List<int> openList = new List<int>();
+        List<int> closedList = new List<int>();
+        List<int> neighbors = new List<int>();
+
+        Dictionary<int,float> gCost = new Dictionary<int,float>();
+        Dictionary<int,float> hCost = new Dictionary<int,float>();
+        Dictionary<int,float> fCost = new Dictionary<int,float>();
+
+        gCost[startId] = 0;
+        hCost[startId] = this.mapHeuristic(startId,endId);
+        System.Diagnostics.Debug.Assert(hCost[startId] >= 0);
+        fCost[startId] = hCost[startId];
+
+        openList.Add(startId);
+
+        while( openList.Count() > 0 )
+        {
+            // get the point in the open list with the lowest f-cost. 
+            int p = openList.Aggregate(openList[0], (currentMin, x) => (fCost[x] < fCost[currentMin]) ? x : currentMin);
+            if(p == endId)
+            {
+                List<int> path = new List<int>();
+                path = reconstructPath(cameFrom, endId, path);
+                //List<SupplyNode> pathInGameCoords = path.Select(point => new Vector2(point.Position.x,point.Position.y)).ToList();
+                return path;
+            }
+
+            openList.Remove(p);
+            closedList.Add(p);
+
+            neighbors = this.NetworkConnections[p];
+
+            // limit neighboring points to those not already in the 
+            // open and closed list. 
+            neighbors = neighbors.Where(neighbor =>
+                    !openList.Contains(neighbor) && !closedList.Contains(neighbor)
+                    ).ToList();
+
+
+            foreach (int possibleLink in neighbors)
+            {
+                bool tentativeIsBetter;
+                SupplyNode nodeForPossibleLink = this.NetworkNodes[possibleLink];
+                SupplyNode nodeForP = this.NetworkNodes[p];
+                float tentativeGCost = gCost[p] + ((nodeForP.Position.x == nodeForPossibleLink.Position.x || nodeForP.Position.y == nodeForPossibleLink.Position.y) ? 10 : 14);
+                if (!openList.Contains(possibleLink))
+                {
+                    openList.Add(possibleLink);
+                    tentativeIsBetter = true;
+                }
+                else if (tentativeGCost < gCost[possibleLink])
+                {
+                    tentativeIsBetter = true;
+                }
+                else
+                {
+                    tentativeIsBetter = false;
+                }
+
+                if (tentativeIsBetter == true)
+                {
+                    cameFrom[possibleLink] = p;
+                    gCost[possibleLink] = tentativeGCost;
+                    hCost[possibleLink] = this.mapHeuristic(possibleLink, endId);
+                    fCost[possibleLink] = gCost[possibleLink] + hCost[possibleLink];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private float mapHeuristic(int start, int end)
+    {
+        SupplyNode startNode = this.NetworkNodes[start];
+        SupplyNode endNode = this.NetworkNodes[end];
+        return 10 * (Math.Abs(startNode.Position.x - endNode.Position.x) + Math.Abs(startNode.Position.y - endNode.Position.y));
+    }
+
+    private List<int> reconstructPath(Dictionary<int, int> cameFrom, int currentNode, List<int> path)
+    {
+        if (cameFrom.ContainsKey(currentNode))
+        {
+            path.Insert(0, cameFrom[currentNode]);
+            return reconstructPath(cameFrom, cameFrom[currentNode], path);
+        }
+        else
+        {
+            return path;
+        }
+    }
+
     /// <summary>
     /// Returns the position of the Network node that
     /// is closest to input position in 2D space
@@ -230,22 +332,35 @@ public class SupplyNetwork
         return this.NetworkNodes[id];
     }
 
+    public void Requisition()
+    {
+        UnityEngine.Object unitResource = Resources.Load(@"Unit");
+
+        List<int> shortestPath = this.shortestPath(0, this.NetworkNodes.Keys.Last( ));
+        List<Vector2> shortestPathCoords = shortestPath.Select(nodeId => new Vector2(this.NetworkNodes[nodeId].Position.x,this.NetworkNodes[nodeId].Position.y)).ToList();
+
+        Vector3 startPosition = this.NetworkNodes[shortestPath[0]].Position;
+        GameObject unitTest = UnityEngine.Object.Instantiate( unitResource, startPosition, Quaternion.identity) as GameObject;
+        Unit unit = unitTest.GetComponent(typeof(Unit)) as Unit;
+        unit.SetPath(shortestPathCoords);
+    }
+
     private void InstantiateNodeObject(Vector3 position)
     {
-        Object node = Resources.Load(@"SupplyNode");
+        UnityEngine.Object node = Resources.Load(@"SupplyNode");
 
         if(node == null)
         {
             throw new System.ArgumentException("prefab not loaded");
         }
 
-        Object.Instantiate(node, position, Quaternion.identity);
+        UnityEngine.Object.Instantiate(node, position, Quaternion.identity);
     }
 
     private void InstantiateEdgeObject(Vector3 startPosition, Vector3 endPosition)
     {
-        Object edgeResource = Resources.Load(@"SupplyEdge");
-        GameObject edgeTest = Object.Instantiate(edgeResource, Vector3.zero, Quaternion.identity) as GameObject;
+        UnityEngine.Object edgeResource = Resources.Load(@"SupplyEdge");
+        GameObject edgeTest = UnityEngine.Object.Instantiate(edgeResource, Vector3.zero, Quaternion.identity) as GameObject;
         SupplyEdge edge = edgeTest.GetComponent(typeof(SupplyEdge)) as SupplyEdge;
         edge.Initialize(
                 startPosition,
