@@ -4,9 +4,11 @@ using System.Collections.Generic;
 
 public class GamePlayState 
 {
-
     private SupplyNetwork supplyLines;
     private SupplyEdgeBeingPlaced IntermediateEdge;
+
+    private Profile blueTeam;
+    private Profile redTeam;
 
     public enum CommandState
     {
@@ -15,20 +17,20 @@ public class GamePlayState
         /// </summary>
         BlankState,
 
-        /// <summary>
-        /// state when we've just started DefineSupplyLine state (UI button has just been pushed)
-        /// </summary>
-        DefineSupplyLinesStart,
+            /// <summary>
+            /// state when we've just started DefineSupplyLine state (UI button has just been pushed)
+            /// </summary>
+            DefineSupplyLinesStart,
 
-        /// <summary>
-        /// 
-        /// </summary>
-        DefineSupplyLine,
+            /// <summary>
+            /// 
+            /// </summary>
+            DefineSupplyLine,
 
-        /// <summary>
-        /// Constant requisition soldiers.
-        /// </summary>
-        RequisitionSoldiers
+            /// <summary>
+            /// Constant requisition soldiers.
+            /// </summary>
+            RequisitionSoldiers
     }
 
     public GamePlayState()
@@ -76,14 +78,19 @@ public class GamePlayState
         {
             //Debug.Log("CommandState.DefineSupplyLine");
 
-            Vector2 mousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-            Vector3 worldPositionForMouse = TopDownCamera.ScreenToWorldPoint(mousePosition);
-            Vector3 endPointOfLastEdge = this.supplyLines.AddEdge(worldPositionForMouse);
-            this.IntermediateEdge.networkReference = this.supplyLines;
-            this.IntermediateEdge.startPos = endPointOfLastEdge ;
+            if(IntermediateEdge.isValid)
+            {
+                Vector2 mousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+                Vector3 worldPositionForMouse = TopDownCamera.ScreenToWorldPoint(mousePosition);
+                Vector3 endPointOfLastEdge = this.supplyLines.AddEdge(worldPositionForMouse);
+                this.IntermediateEdge.networkReference = this.supplyLines;
+                this.IntermediateEdge.startPos = endPointOfLastEdge ;
+            }
         }
         else if (this.CurrentInputState == CommandState.RequisitionSoldiers)
         {
+            Debug.Log("Requisition");
+            this.supplyLines.Requisition();
         }
     }
 
@@ -102,6 +109,7 @@ public class GamePlayState
             {
                 CommandEvent commandEvent = (CommandEvent)inputEvent;
                 this.CurrentInputState = commandEvent.Command;
+                DelegateClick(inputEvent.worldPosition);
                 eventsToRemove.Add (inputEvent);
             }
             else
