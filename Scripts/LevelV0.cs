@@ -143,6 +143,56 @@ public class LevelV0 : MonoBehaviour
         this.gamePlayState.UpdateState();
     }
 
+	/// <summary>
+	/// Gets the selected building: one building in the level can be 'selected' at any time. 
+	/// this function returns that one building. 
+	/// </summary>
+	/// <returns>
+	/// The selected building.
+	/// </returns
+	public static Building GetSelectedBuilding()
+	{
+		Building returnBuilding = null;
+		try
+		{
+			returnBuilding = buildings.Single(building =>
+				{
+					MeshRenderer[] meshRenderer = building.GetComponentsInChildren<MeshRenderer>() as MeshRenderer[];
+					Color buildingColor = meshRenderer[1].material.color;
+					if(buildingColor.Equals(Color.cyan))
+					{
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				});
+		}
+		catch(System.Exception e)
+		{
+			Debug.Log("asdfasdf");
+			throw e;
+		}
+			
+		return returnBuilding;
+	}
+	
+	public static void AddBuildingEntryPointsToNetwork(SupplyNetwork network)
+	{
+		buildings.ForEach( building => 
+		{
+			// get the adjusted entry positions for this building. 
+			List<Vector3> adjustedEntryPositions = building.LevelAdjustedEntryPointPosition();
+			
+			// pass these off to our supply network. 
+			List<int> nodeIds = network.AddNodeFromBuildingEntryPoints(adjustedEntryPositions); 
+			
+			// make sure that the building keeps a reference to the ids that were created. 
+			building.nodeIdsForEntryPoints = nodeIds;
+		});
+	}
+	
     public static List<Vector3> GetEntryPointPositionsInLevel()
     {
         List<Vector3> doorPositions = buildings.SelectMany( building => 

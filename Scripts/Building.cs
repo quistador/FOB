@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class Building : MonoBehaviour 
 {
@@ -54,19 +55,18 @@ public class Building : MonoBehaviour
 
             Door door = doorObject.GetComponent(typeof(SupplyEdge)) as Door;
             isInitialized = true;
-            
-			Transform cube = this.transform.FindChild("cube");
-			cube.transform.localScale = new Vector3(
-					buildingWidth,
-					buildingWidth,
-					cube.transform.localScale.z
-				);
-			cube.transform.position = new Vector3(
-					cube.transform.position.x + buildingWidth/2,
-					cube.transform.position.y + buildingWidth/2,
-					cube.transform.position.z
-				);
-			
+
+            Transform cube = this.transform.FindChild("cube");
+            cube.transform.localScale = new Vector3(
+                    buildingWidth,
+                    buildingWidth,
+                    cube.transform.localScale.z
+                    );
+            cube.transform.position = new Vector3(
+                    cube.transform.position.x + buildingWidth/2,
+                    cube.transform.position.y + buildingWidth/2,
+                    cube.transform.position.z
+                    );
         }
     }
 
@@ -89,6 +89,58 @@ public class Building : MonoBehaviour
             }
         }
     }
+    
+    /// <summary>
+    /// Sets the level adjusted entry point position.
+    /// </summary>
+    /// <value>
+    /// The level adjusted entry point position.
+    /// </value>
+	public List<Vector3> LevelAdjustedEntryPointPosition()
+	{
+        // problem:  if we use the door position as the entry point position (which initially seems like the 
+        // logical thing to do), then our 'supplyEdgeBeingPlaced' will intersect with the building (since it starts
+        // at the entry point positions that we return from this function).  If it intersects, then the edge will 
+        // be marked as 'invalid', because we don't want to allow edges that intersect with buildings. So, how do we solve?
+        // we'll start with a naive approach, where we move the entry point outward from the bounds-center of the building, 
+        // along the vector that travels from the bounds center to the door position:  
+        //
+        //                               o  <---(adjusted door position)
+        //                             /
+        //                           /
+        // |---------------------|-x-|-|    <---(original door position)
+        // |                     /     |
+        // |                   /       |
+        // |                 /         |
+        // |               /           |
+        // |             x             |
+        // |        (bounds center)    |
+        // |                           |
+        // |                           |
+        // |                           |
+        // |___________________________|
+        //
+        // this *will* look weird for certain door positions and this shouldn't be a permanent solution. 
+        MeshCollider collider = this.gameObject.GetComponent<MeshCollider>();
+        Vector3 buildingCenter = collider.bounds.center;
+ 	
+		List<Vector3> adjustedDoors = this.EntryPointPositions.Select(door =>
+			{
+                // get the vector from the center to the door. 
+                Vector3 centerToDoor = buildingCenter - door;
+                centerToDoor.Normalize();
+                centerToDoor = centerToDoor * 0.01f;
+                return door - centerToDoor;
+	        }).ToList();
+	        
+	    return adjustedDoors; 
+	}
+    
+    /// <summary>
+    /// The node identifiers for entry points.  In order to link our buildings into the supplyNetwork, 
+    /// we need to be able to reference node Ids in the network that 
+    /// </summary>
+	public List<int> nodeIdsForEntryPoints{ get; set; }
 
     public Bounds AxisAlignedBoundingBox()
     {
