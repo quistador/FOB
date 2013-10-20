@@ -44,13 +44,13 @@ public class TopDownCamera : MonoBehaviour
             {
                 //Debug.Log("Clicked on" + hit.collider.gameObject.name);
                 MeshRenderer mesh = hit.collider.gameObject.GetComponent<MeshRenderer>() as MeshRenderer;
-                if(mesh.material.color == Color.yellow)
+                if(mesh.material.color == Color.white)
                 {
                     mesh.material.color = Color.cyan;
                 }
                 else
                 {
-                    mesh.material.color = Color.yellow;
+                    mesh.material.color = Color.white;
                 }
             }
 

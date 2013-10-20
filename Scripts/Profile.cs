@@ -3,10 +3,10 @@ using System.Collections;
 
 public class Profile
 {
-	private Army army;
-	
-	public Profile(string player)
-	{
-		
-	}
+    private Army army;
+
+    public Profile(string player)
+    {
+
+    }
 }

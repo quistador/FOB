@@ -11,7 +11,7 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 
     private SupplyNetwork _networkReference;
     private bool _isValid;
-    
+
     // Use this for initialization
     void Start () 
     {
@@ -40,8 +40,8 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
         this.gameObject.AddComponent<Rigidbody>();
         Rigidbody rigidBody = this.gameObject.GetComponent<Rigidbody>();
         rigidBody.useGravity = false;
-        
-		this._isValid = true;
+
+        this._isValid = true;
     }
 
     // Update is called once per frame
@@ -83,7 +83,7 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
                     lengthFromOriginToEndpoint, 
                     mesh.transform.localScale.y, 
                     mesh.transform.localScale.z);
-                    
+
             MeshRenderer meshRenderer = this.gameObject.GetComponent<MeshRenderer>();
 
             this.transform.position = new Vector3(startPos.x,startPos.y, -0.03f);
@@ -94,16 +94,16 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
             throw;
         }
     }
-    
-	public bool isValid
-	{
-		get { return this._isValid; }
-	}
+
+    public bool isValid
+    {
+        get { return this._isValid; }
+    }
 
     void OnTriggerEnter(Collider test)
     {
         Debug.Log("trigger enter  " + test.gameObject.name);
-		MeshRenderer meshRenderer = this.gameObject.GetComponent<MeshRenderer>();
+        MeshRenderer meshRenderer = this.gameObject.GetComponent<MeshRenderer>();
         meshRenderer.material.color = Color.black;
         this._isValid = false;
     }
@@ -111,7 +111,7 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
     void OnTriggerExit(Collider test)
     {
         Debug.Log("trigger exit  " + test.gameObject.name);
-		MeshRenderer meshRenderer = this.gameObject.GetComponent<MeshRenderer>();
+        MeshRenderer meshRenderer = this.gameObject.GetComponent<MeshRenderer>();
         meshRenderer.material.color = Color.white;
         this._isValid = true;
     }
