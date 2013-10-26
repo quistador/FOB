@@ -21,19 +21,19 @@ public class SupplyNetwork
         NetworkNodes = new SortedDictionary<int, SupplyNode>();
         NetworkConnections = new Dictionary<int, List<int>>();
         int nodeId = 0;
-        
+
         // the first node always has id=0. 
         this.NetworkNodes.Add (
                 nodeId, 
                 new SupplyNetwork.SupplyNode(startPos));
-                
+
         // create an initial node at startPos. 
         this.InstantiateNodeObject(startPos);
-        
+
         // add nodes for all the entry points in our level. 
-		LevelV0.AddBuildingEntryPointsToNetwork(this);
+        LevelV0.AddBuildingEntryPointsToNetwork(this);
     } 
-    
+
     /// <summary>
     /// Adds the nodes from building entry points.
     /// </summary>
@@ -43,19 +43,19 @@ public class SupplyNetwork
     /// <param name='building'>
     /// Building.
     /// </param>
-	public List<int> AddNodeFromBuildingEntryPoints(List<Vector3> entryPointPositions)
-	{
-		List<int> nodeIdsForThisBuilding = new List<int>();
-		
-		entryPointPositions.ForEach( position =>
-			{
-				int newId = this.NetworkNodes.Keys.Max () + 1;
-				this.NetworkNodes.Add (newId,new SupplyNetwork.SupplyNode(position));
-				nodeIdsForThisBuilding.Add(newId);
-			});
-			
-		return nodeIdsForThisBuilding;
-	}
+    public List<int> AddNodeFromBuildingEntryPoints(List<Vector3> entryPointPositions)
+    {
+        List<int> nodeIdsForThisBuilding = new List<int>();
+
+        entryPointPositions.ForEach( position =>
+                {
+                int newId = this.NetworkNodes.Keys.Max () + 1;
+                this.NetworkNodes.Add (newId,new SupplyNetwork.SupplyNode(position));
+                nodeIdsForThisBuilding.Add(newId);
+                });
+
+        return nodeIdsForThisBuilding;
+    }
 
     /// <summary>
     /// Adds the edge to the supply network at position endNodePosition
@@ -218,6 +218,7 @@ public class SupplyNetwork
             {
                 List<int> path = new List<int>();
                 path = reconstructPath(cameFrom, endId, path);
+                path.Add (endId);
                 //List<SupplyNode> pathInGameCoords = path.Select(point => new Vector2(point.Position.x,point.Position.y)).ToList();
                 return path;
             }
@@ -337,8 +338,8 @@ public class SupplyNetwork
 
         var a = distanceToIdMap.Take(numberOfNodes);
         List<int> nearestIds = distanceToIdMap.Take(numberOfNodes).Select( kvp => kvp.Value ).ToList();
-
-        //Debug.Log(string.Format("calculating nearest neighbor for position {0:F02},{1:F02} = {2:F02},{3:F02}", position.x,position.y, nearestNode.Position.x,nearestNode.Position.y));
+        Debug.Log (this.NetworkNodes.Keys.Count);
+        //Debug.Log(string.Format("calculating nearest neighbor for position {0:F02},{1:F02} = {2:F02},{3:F02}; ID = {4}", position.x,position.y, nearestNode.Position.x,nearestNode.Position.y, nearestIds.First()));
         return nearestIds;
     }
 
@@ -350,11 +351,11 @@ public class SupplyNetwork
     public void Requisition()
     {
         UnityEngine.Object unitResource = Resources.Load(@"Unit");
-	
-		Building selectedBuilding = LevelV0.GetSelectedBuilding();
-		int idForSelection = selectedBuilding.nodeIdsForEntryPoints.First();
+
+        Building selectedBuilding = LevelV0.GetSelectedBuilding();
+        int idForSelection = selectedBuilding.nodeIdsForEntryPoints.First();
         List<int> shortestPath = this.shortestPath(0, idForSelection);
-        
+
         List<Vector2> shortestPathCoords = shortestPath.Select(nodeId => new Vector2(this.NetworkNodes[nodeId].Position.x,this.NetworkNodes[nodeId].Position.y)).ToList();
 
         Vector3 startPosition = this.NetworkNodes[shortestPath[0]].Position;

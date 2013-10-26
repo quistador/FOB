@@ -78,7 +78,7 @@ public class GamePlayState
         {
             //Debug.Log("CommandState.DefineSupplyLine");
 
-            if(IntermediateEdge.isValid)
+            if(this.IntermediateEdge.isValid)
             {
                 Vector2 mousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
                 Vector3 worldPositionForMouse = TopDownCamera.ScreenToWorldPoint(mousePosition);
@@ -89,6 +89,7 @@ public class GamePlayState
         }
         else if (this.CurrentInputState == CommandState.RequisitionSoldiers)
         {
+            this.IntermediateEdge.gameObject.SetActive(false);
             Debug.Log("Requisition");
             this.supplyLines.Requisition();
         }

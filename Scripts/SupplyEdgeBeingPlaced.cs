@@ -30,7 +30,7 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
         collider.enabled = true;
         collider.isTrigger = true;
 
-        collider.extents = new Vector3(
+        collider.size = new Vector3(
                 collider.bounds.extents.x,
                 collider.bounds.extents.y,
                 10f);
