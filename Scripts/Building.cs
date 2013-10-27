@@ -89,15 +89,15 @@ public class Building : MonoBehaviour
             }
         }
     }
-    
+
     /// <summary>
     /// Sets the level adjusted entry point position.
     /// </summary>
     /// <value>
     /// The level adjusted entry point position.
     /// </value>
-	public List<Vector3> LevelAdjustedEntryPointPosition()
-	{
+    public List<Vector3> LevelAdjustedEntryPointPosition()
+    {
         // problem:  if we use the door position as the entry point position (which initially seems like the 
         // logical thing to do), then our 'supplyEdgeBeingPlaced' will intersect with the building (since it starts
         // at the entry point positions that we return from this function).  If it intersects, then the edge will 
@@ -123,24 +123,24 @@ public class Building : MonoBehaviour
         // this *will* look weird for certain door positions and this shouldn't be a permanent solution. 
         MeshCollider collider = this.gameObject.GetComponent<MeshCollider>();
         Vector3 buildingCenter = collider.bounds.center;
- 	
-		List<Vector3> adjustedDoors = this.EntryPointPositions.Select(door =>
-			{
+
+        List<Vector3> adjustedDoors = this.EntryPointPositions.Select(door =>
+                {
                 // get the vector from the center to the door. 
                 Vector3 centerToDoor = buildingCenter - door;
                 centerToDoor.Normalize();
                 centerToDoor = centerToDoor * 0.01f;
                 return door - centerToDoor;
-	        }).ToList();
-	        
-	    return adjustedDoors; 
-	}
-    
+                }).ToList();
+
+        return adjustedDoors; 
+    }
+
     /// <summary>
     /// The node identifiers for entry points.  In order to link our buildings into the supplyNetwork, 
     /// we need to be able to reference node Ids in the network that 
     /// </summary>
-	public List<int> nodeIdsForEntryPoints{ get; set; }
+    public List<int> nodeIdsForEntryPoints{ get; set; }
 
     public Bounds AxisAlignedBoundingBox()
     {
