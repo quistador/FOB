@@ -23,7 +23,7 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 
         this.transform.position = Vector3.zero;
         this.transform.Translate(new Vector3(0f,0f,-0.03f));
-        this._networkReference = new SupplyNetwork(Vector3.zero);
+        this._networkReference = GamePlayState.GetSupplyLines();
         this.gameObject.AddComponent<BoxCollider>();
         BoxCollider collider = this.gameObject.GetComponent<BoxCollider >();
 
@@ -114,10 +114,5 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
         MeshRenderer meshRenderer = this.gameObject.GetComponent<MeshRenderer>();
         meshRenderer.material.color = Color.white;
         this._isValid = true;
-    }
-
-    public SupplyNetwork networkReference
-    {
-        set{ this._networkReference = value; }
     }
 }

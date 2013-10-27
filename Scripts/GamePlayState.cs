@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class GamePlayState 
 {
-    private SupplyNetwork supplyLines;
+    private static SupplyNetwork supplyLines;
     private SupplyEdgeBeingPlaced IntermediateEdge;
 
     private Profile blueTeam;
@@ -35,7 +35,7 @@ public class GamePlayState
 
     public GamePlayState()
     {
-        supplyLines = new SupplyNetwork(Vector3.zero);
+        GamePlayState.supplyLines = new SupplyNetwork(Vector3.zero);
         this.CurrentInputState = CommandState.BlankState;
     }
 
@@ -71,7 +71,6 @@ public class GamePlayState
             GameObject edgeTest = Object.Instantiate(edgeResource, Vector3.zero, Quaternion.identity) as GameObject;
             this.IntermediateEdge = edgeTest.GetComponent(typeof(SupplyEdge)) as SupplyEdgeBeingPlaced;
             this.IntermediateEdge.startPos = Vector3.zero;
-            this.IntermediateEdge.networkReference = this.supplyLines;
             this.CurrentInputState = CommandState.DefineSupplyLine;
         }
         else if (this.CurrentInputState == CommandState.DefineSupplyLine)
@@ -82,8 +81,7 @@ public class GamePlayState
             {
                 Vector2 mousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
                 Vector3 worldPositionForMouse = TopDownCamera.ScreenToWorldPoint(mousePosition);
-                Vector3 endPointOfLastEdge = this.supplyLines.AddEdge(worldPositionForMouse);
-                this.IntermediateEdge.networkReference = this.supplyLines;
+                Vector3 endPointOfLastEdge = GamePlayState.supplyLines.AddEdge(worldPositionForMouse);
                 this.IntermediateEdge.startPos = endPointOfLastEdge ;
             }
         }
@@ -91,7 +89,7 @@ public class GamePlayState
         {
             this.IntermediateEdge.gameObject.SetActive(false);
             Debug.Log("Requisition");
-            this.supplyLines.Requisition();
+            GamePlayState.supplyLines.Requisition();
         }
     }
 
@@ -123,5 +121,10 @@ public class GamePlayState
         }
 
         EventQueue.RemoveEvents(eventsToRemove);
+    }
+
+    public static SupplyNetwork GetSupplyLines()
+    {
+        return GamePlayState.supplyLines;
     }
 }
