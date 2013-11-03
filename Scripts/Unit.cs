@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ public class Unit : MonoBehaviour
     /// The path to follow, assuming that the unit is travelling along supply lines in 
     /// our supply network, they'll travel along the network nodes identified by these integers. 
     /// </summary>
-    List<Vector2> pathToFollow;
+    List<SupplyNetwork.SupplyNode> pathToFollow;
 
     /// <summary>
     /// The current index on path.
@@ -31,8 +32,14 @@ public class Unit : MonoBehaviour
     // Update is called once per frame
     void Update () 
     { 
+        float threshold = 0.01f;
+
         if(this.pathToFollow != null && this.pathToFollow.Count > 0)
         {
+            float distanceToNextNode = Vector2.Distance(
+                    new Vector2(this.transform.position.x,this.transform.position.y),
+                    this.pathToFollow[currentIndexOnPath].Position);
+
             // Check and see if we are close enough to our next node. 
             // we have to treat the last leg of the journey as a special case, so check 
             // for that first. 
@@ -41,35 +48,55 @@ public class Unit : MonoBehaviour
                 // we aren't on the last leg.  This is the normal case.
                 // now, check to see if we are 'close enough' to intermediate node that 
                 // we are travelling to
-                float distanceToNextNode = Vector2.Distance(
-                        new Vector2(this.transform.position.x,this.transform.position.y),
-                        this.pathToFollow[currentIndexOnPath]);
 
                 // if we are sufficiently close start moving to the next node. 
-                if( distanceToNextNode < 0.01f )
+                if( distanceToNextNode < threshold )
                 {
                     currentIndexOnPath = currentIndexOnPath + 1;
                 }
             }
+            else
+            {
+                // we are at the last leg!  now, when we're really close 
+                // to the nextNode, add an event to the queue so that our building 
+                // knows that we're here. 
+                // if we are sufficiently close start moving to the next node. 
+                if( distanceToNextNode < threshold )
+                {
+                    // return here.  We don't want the node to continue updating it's position. 
+                    GamePlayEvents.Events.Add( 
+                        new GamePlayEvent()
+                        {
+                            nodeId = this.pathToFollow[currentIndexOnPath].NodeId,
+							eventKind = GamePlayEvent.EventKind.UnitArrived
+                        }
+                    );
+                    this.SetPath(new List<SupplyNetwork.SupplyNode>());
+                    this.gameObject.SetActive(false);
+                    return;
+                }
+            }
 
-            destinationPosition = this.pathToFollow[currentIndexOnPath];
+            destinationPosition = this.pathToFollow[currentIndexOnPath].Position;
 
             directionToDestination = new Vector2(
                     destinationPosition.x - this.transform.position.x,
                     destinationPosition.y - this.transform.position.y);
 
             directionToDestination.Normalize();
-
-            // ok, now we actually move our unit along the path. 
-            this.transform.position = new Vector3(
+            Vector3 newPosition = new Vector3(
                     this.transform.position.x + this.directionToDestination.x * speed,
                     this.transform.position.y + this.directionToDestination.y * speed,
                     this.transform.position.z);
-        }
 
+            //Debug.Log(System.String.Format("travelling distance: {0}", Vector3.Distance(this.transform.position, newPosition)));
+
+            // ok, now we actually move our unit along the path. 
+            this.transform.position = newPosition;
+        }
     }
 
-    public void SetPath(List<Vector2> path)
+    public void SetPath(List<SupplyNetwork.SupplyNode> path)
     {
         this.pathToFollow = path;
     }

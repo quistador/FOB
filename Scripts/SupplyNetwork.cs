@@ -20,12 +20,13 @@ public class SupplyNetwork
     {
         NetworkNodes = new SortedDictionary<int, SupplyNode>();
         NetworkConnections = new Dictionary<int, List<int>>();
+        
         int nodeId = 0;
 
         // the first node always has id=0. 
         this.NetworkNodes.Add (
                 nodeId, 
-                new SupplyNetwork.SupplyNode(startPos));
+                new SupplyNetwork.SupplyNode(){Position = startPos, NodeId = nodeId} );
 
         // create an initial node at startPos. 
         this.InstantiateNodeObject(startPos);
@@ -40,6 +41,9 @@ public class SupplyNetwork
     /// <returns>
     /// The nodeIds from the building entry points.
     /// </returns>
+    /// <param name='entryPointPositions'>
+    /// positions of the doors for this building.
+    /// </param>
     /// <param name='building'>
     /// Building.
     /// </param>
@@ -49,9 +53,9 @@ public class SupplyNetwork
 
         entryPointPositions.ForEach( position =>
                 {
-                int newId = this.NetworkNodes.Keys.Max () + 1;
-                this.NetworkNodes.Add (newId,new SupplyNetwork.SupplyNode(position));
-                nodeIdsForThisBuilding.Add(newId);
+                    int newId = this.NetworkNodes.Keys.Max () + 1;
+                    this.NetworkNodes.Add (newId,new SupplyNetwork.SupplyNode(){Position = position, NodeId = newId});
+                    nodeIdsForThisBuilding.Add(newId);
                 });
 
         return nodeIdsForThisBuilding;
@@ -110,7 +114,7 @@ public class SupplyNetwork
             }
         }
 
-        SupplyNetwork.SupplyNode newNode = new SupplyNetwork.SupplyNode(endNodePositionTransformed);
+        SupplyNetwork.SupplyNode newNode = new SupplyNetwork.SupplyNode(){Position = endNodePositionTransformed, NodeId  = newId};
         NetworkNodes[newId] = newNode;
 
         AddConnection(nearestNodeId[0], newId);
@@ -178,12 +182,17 @@ public class SupplyNetwork
     /// </summary>
     public class SupplyNode
     {
+        public SupplyNode()
+        {
+        }
+
         public SupplyNode(Vector3 position)
         {
             this.Position = position;
         }
 
         public Vector3 Position { get; set; }
+        public int NodeId { get; set; }
     }
 
     public List<int> shortestPath(int startId, int endId)
@@ -338,7 +347,6 @@ public class SupplyNetwork
 
         var a = distanceToIdMap.Take(numberOfNodes);
         List<int> nearestIds = distanceToIdMap.Take(numberOfNodes).Select( kvp => kvp.Value ).ToList();
-        Debug.Log (this.NetworkNodes.Keys.Count);
         //Debug.Log(string.Format("calculating nearest neighbor for position {0:F02},{1:F02} = {2:F02},{3:F02}; ID = {4}", position.x,position.y, nearestNode.Position.x,nearestNode.Position.y, nearestIds.First()));
         return nearestIds;
     }
@@ -356,7 +364,12 @@ public class SupplyNetwork
         int idForSelection = selectedBuilding.nodeIdsForEntryPoints.First();
         List<int> shortestPath = this.shortestPath(0, idForSelection);
 
-        List<Vector2> shortestPathCoords = shortestPath.Select(nodeId => new Vector2(this.NetworkNodes[nodeId].Position.x,this.NetworkNodes[nodeId].Position.y)).ToList();
+        List<SupplyNetwork.SupplyNode> shortestPathCoords = shortestPath.Select(nodeId => 
+                new SupplyNetwork.SupplyNode()
+                {
+                    Position = new Vector2(this.NetworkNodes[nodeId].Position.x,this.NetworkNodes[nodeId].Position.y),
+                    NodeId = nodeId
+                }).ToList();
 
         Vector3 startPosition = this.NetworkNodes[shortestPath[0]].Position;
         GameObject unitTest = UnityEngine.Object.Instantiate( unitResource, startPosition, Quaternion.identity) as GameObject;

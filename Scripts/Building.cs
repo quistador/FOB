@@ -73,6 +73,7 @@ public class Building : MonoBehaviour
     // Update is called once per frame
     void Update () 
     {
+        // check for input events
         List<InputEvent> events = EventQueue.GetEventQueue();
         if(events == null)
         { 
@@ -87,6 +88,22 @@ public class Building : MonoBehaviour
                 //Debug.Log(string.Format("{0} was hit, setting color to magenta",this.gameObject.name));
                 //this.material.color = Color.white;
             }
+        }
+
+        // check for any events that indicate that a unit arrived in this building. 
+        List<GamePlayEvent> unitArrivedInThisBuilding = GamePlayEvents.Events.Where( 
+                gameEvent => gameEvent.eventKind == GamePlayEvent.EventKind.UnitArrived )
+            .ToList()
+            .Where(
+                    unitArrivedEvent => this.nodeIdsForEntryPoints.Contains(unitArrivedEvent.nodeId))
+            .ToList();
+
+		// if a unit has arrived in the building, remove the 'unitarrived' event from our
+		// event list and do something. 
+        if(unitArrivedInThisBuilding.Count > 0)
+        {
+        	GamePlayEvents.Events.Remove(unitArrivedInThisBuilding.First());
+            Debug.Log("unit arrived in building " + this.GetInstanceID() );
         }
     }
 
@@ -126,11 +143,11 @@ public class Building : MonoBehaviour
 
         List<Vector3> adjustedDoors = this.EntryPointPositions.Select(door =>
                 {
-                // get the vector from the center to the door. 
-                Vector3 centerToDoor = buildingCenter - door;
-                centerToDoor.Normalize();
-                centerToDoor = centerToDoor * 0.01f;
-                return door - centerToDoor;
+                    // get the vector from the center to the door. 
+                    Vector3 centerToDoor = buildingCenter - door;
+                    centerToDoor.Normalize();
+                    centerToDoor = centerToDoor * 0.01f;
+                    return door - centerToDoor;
                 }).ToList();
 
         return adjustedDoors; 

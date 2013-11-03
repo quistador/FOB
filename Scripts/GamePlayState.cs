@@ -17,20 +17,20 @@ public class GamePlayState
         /// </summary>
         BlankState,
 
-            /// <summary>
-            /// state when we've just started DefineSupplyLine state (UI button has just been pushed)
-            /// </summary>
-            DefineSupplyLinesStart,
+        /// <summary>
+        /// state when we've just started DefineSupplyLine state (UI button has just been pushed)
+        /// </summary>
+        DefineSupplyLinesStart,
 
-            /// <summary>
-            /// 
-            /// </summary>
-            DefineSupplyLine,
+        /// <summary>
+        /// 
+        /// </summary>
+        DefineSupplyLine,
 
-            /// <summary>
-            /// Constant requisition soldiers.
-            /// </summary>
-            RequisitionSoldiers
+        /// <summary>
+        /// Constant requisition soldiers.
+        /// </summary>
+        RequisitionSoldiers
     }
 
     public GamePlayState()
