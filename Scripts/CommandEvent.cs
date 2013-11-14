@@ -8,12 +8,12 @@ public class CommandEvent : InputEvent
     {
     }
 
-    public CommandEvent(GamePlayState.CommandState command)
+    public CommandEvent(GamePlayState.GameMode command)
     {
         this.Command = command;
     }
 
-    public GamePlayState.CommandState Command
+    public GamePlayState.GameMode Command
     {
         get; set;
     }

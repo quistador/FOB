@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 public class TopDownCamera : MonoBehaviour 
 {
-	private int leftPaneWidth = 100;
+    private int leftPaneWidth = 100;
+    private bool unitPaneShown = false;
 
     // Use this for initialization
     void Start () 
@@ -25,10 +26,11 @@ public class TopDownCamera : MonoBehaviour
 
         // check for left click.
         if( Input.GetMouseButtonDown(0) 
-		    && 
-		   
-		    // we don't process clicks that happen in the left pane (where our buttons are). 
-		    Input.mousePosition.x > this.leftPaneWidth)
+
+                && 
+
+                // we don't process clicks that happen in the left pane (where our buttons are). 
+                Input.mousePosition.x > this.leftPaneWidth)
         {
             //Debug.Log(string.Format("clickin on screen coordinates -- x:{0},y:{1},arctan(x/y):{2}", Input.mousePosition.x,Input.mousePosition.y,System.Math.Atan(Input.mousePosition.x/Input.mousePosition.y) * (180f/Mathf.PI)));
             RaycastHit hit;
@@ -66,15 +68,23 @@ public class TopDownCamera : MonoBehaviour
     /// </summary>
     void OnGUI()
     {
-    	//GUILayout.BeginArea(new Rect(0,0,this.leftPaneWidth,Screen.width));
-    	GUILayout.BeginVertical("box");
+        //GUILayout.BeginArea(new Rect(0,0,this.leftPaneWidth,Screen.width));
+        GUILayout.BeginVertical("box");
+        if(GUILayout.Button ("Go!",new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)}))   
+        {
+            /// when the "go!" button is pressed, all orders that have been added to our queue are issued. 
+            EventQueue.AddToEventQueue(new CommandEvent(GamePlayState.GameMode.ActionMode));
+        }
         if(GUILayout.Button("Waypoint", new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)}))
         {
-            EventQueue.AddToEventQueue(new CommandEvent(GamePlayState.CommandState.DefineSupplyLinesStart));
+            // enters our game into a state where the user can define supply lines. 
+            EventQueue.AddToEventQueue(new CommandEvent(GamePlayState.GameMode.DefineSupplyLinesStart));
         }
         if(GUILayout.Button ("Requisition",new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)}))   
         {
-            EventQueue.AddToEventQueue(new CommandEvent(GamePlayState.CommandState.RequisitionSoldiers));
+            // enters a game state where the users can issue movement orders to units. 
+            this.unitPaneShown = ! this.unitPaneShown;
+            EventQueue.AddToEventQueue(new CommandEvent(GamePlayState.GameMode.OrderUnitMovementMode));
         }
         GUILayout.EndVertical();
         //GUILayout.EndArea();

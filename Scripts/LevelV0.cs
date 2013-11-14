@@ -132,14 +132,23 @@ public class LevelV0 : MonoBehaviour
                     cityBlockMaterial, 
                     blockObject);
         }
+        
+        // for our v0 level, we have to specify a starting position somehow (we
+        // we currently don't have a user input way of doing it). Choose the first 
+        // building, change this methodology in later levels. 
+        buildings.First().isStartingPosition = true;
 
-        gamePlayState = new GamePlayState();
+        gamePlayState = new GamePlayState(buildings);
     }
 
     // Update is called once per frame
     void Update () 
     {
-        this.gamePlayState.CurrentMouseWorldCoordinate = new Vector3((float)Input.mousePosition.x, (float)Input.mousePosition.y, 0f);
+        this.gamePlayState.CurrentMouseWorldCoordinate = new Vector3(
+            (float)Input.mousePosition.x, 
+            (float)Input.mousePosition.y, 
+            0f);
+            
         this.gamePlayState.UpdateState();
     }
 

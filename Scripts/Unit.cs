@@ -7,8 +7,9 @@ using System.Linq;
 public class Unit : MonoBehaviour 
 {
     private Vector2 destinationPosition;
-    private float speed = 0.001f;
+    private float speed = 0.01f;
     Vector2 directionToDestination;
+    Guid identifier;
 
     /// <summary>
     /// The path to follow, assuming that the unit is travelling along supply lines in 
@@ -25,15 +26,23 @@ public class Unit : MonoBehaviour
     void Start () 
     {
         destinationPosition = new Vector2(0f,0f);
-
         currentIndexOnPath = 0;
+        this.identifier = Guid.NewGuid();
     }
 
     // Update is called once per frame
     void Update () 
     { 
+        // update the positions of this unit, if it's moving along a supply line. 
+        this.MoveUnitAlongSupplyLine();
+    }
+    
+    private void MoveUnitAlongSupplyLine()
+    {
         float threshold = 0.01f;
 
+        // if we don't have a path to follow, then
+        // there aren't any steps to take here. 
         if(this.pathToFollow != null && this.pathToFollow.Count > 0)
         {
             float distanceToNextNode = Vector2.Distance(
@@ -47,9 +56,7 @@ public class Unit : MonoBehaviour
             {
                 // we aren't on the last leg.  This is the normal case.
                 // now, check to see if we are 'close enough' to intermediate node that 
-                // we are travelling to
-
-                // if we are sufficiently close start moving to the next node. 
+                // we are travelling to. if we are sufficiently close start moving to the next node.
                 if( distanceToNextNode < threshold )
                 {
                     currentIndexOnPath = currentIndexOnPath + 1;
@@ -68,7 +75,7 @@ public class Unit : MonoBehaviour
                         new GamePlayEvent()
                         {
                             nodeId = this.pathToFollow[currentIndexOnPath].NodeId,
-							eventKind = GamePlayEvent.EventKind.UnitArrived
+                         eventKind = GamePlayEvent.EventKind.UnitArrived
                         }
                     );
                     this.SetPath(new List<SupplyNetwork.SupplyNode>());
@@ -94,6 +101,8 @@ public class Unit : MonoBehaviour
             // ok, now we actually move our unit along the path. 
             this.transform.position = newPosition;
         }
+        
+        return;
     }
 
     public void SetPath(List<SupplyNetwork.SupplyNode> path)

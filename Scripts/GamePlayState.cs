@@ -1,21 +1,40 @@
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+
 
 public class GamePlayState 
 {
     private static SupplyNetwork supplyLines;
     private SupplyEdgeBeingPlaced IntermediateEdge;
 
-    private Profile blueTeam;
-    private Profile redTeam;
+    private Profile blueTeamProfile;
+    private Profile redTeamProfile;
 
-    public enum CommandState
+    private Army blueTeam;
+    private Army redTeam;
+
+    private Dictionary<Guid, Building> buildingIdToBuildingInfo;
+
+    public enum GameMode
     {
         /// <summary>
         /// State when level just loads:  no commands have been issued.  
         /// </summary>
         BlankState,
+
+        /// <summary>
+        /// game mode where player enters commands. 
+        /// </summary>
+        CommandMode,
+
+        /// <summary>
+        /// game mode where units act based on provided commands. Unlike other modes,
+        /// commands are not entered in this mode. 
+        /// </summary>
+        ActionMode,
 
         /// <summary>
         /// state when we've just started DefineSupplyLine state (UI button has just been pushed)
@@ -28,27 +47,53 @@ public class GamePlayState
         DefineSupplyLine,
 
         /// <summary>
-        /// Constant requisition soldiers.
+        /// Orders unit movement
         /// </summary>
-        RequisitionSoldiers
+        OrderUnitMovementMode
     }
 
-    public GamePlayState()
+    public GamePlayState(List<Building> buildings)
     {
-        GamePlayState.supplyLines = new SupplyNetwork(Vector3.zero);
-        this.CurrentInputState = CommandState.BlankState;
+        this.blueTeamProfile = new Profile("testProfile");
+        this.redTeamProfile = new Profile("testEnemyTeam");
+
+        this.redTeam = new Army(this.redTeamProfile);
+        this.blueTeam = new Army(this.blueTeamProfile);
+
+        // care needs to be taken on *where* we instantiate the supply lines:
+        // note that the SupplyNetwork constructor performs writes to a static class field. 
+        // This isn't preferable, and it's something that should be refactored soon. 
+        GamePlayState.supplyLines = new SupplyNetwork(this.blueTeam);
+        this.CurrentGameMode = GameMode.BlankState;
+        this.buildingIdToBuildingInfo = new Dictionary<Guid, Building>();
+  
+        int armyStartingPointNodeId = -1;
+        foreach(Building building in buildings)
+        {
+            this.buildingIdToBuildingInfo.Add(building.buildingId, building);
+
+            if(building.isStartingPosition)
+            {
+                armyStartingPointNodeId = building.nodeIdsForEntryPoints.First();
+
+                // if this building is a starting point for all of our units, then 
+                // we need to let our supply network 'know', so that it knows where to 
+                // position our units in the initial configuration. 
+                GamePlayState.supplyLines.MarkAsStartingPoint(building.nodeIdsForEntryPoints.First());
+            }
+        }
     }
 
-    private CommandState _CurrentInputState;
-    public CommandState CurrentInputState
+    private GameMode _CurrentGameMode;
+    public GameMode CurrentGameMode
     {
         get
         {
-            return this._CurrentInputState;
+            return this._CurrentGameMode;
         } 
         set
         {
-            this._CurrentInputState = value;
+            this._CurrentGameMode = value;
         }
     }
 
@@ -59,24 +104,20 @@ public class GamePlayState
 
     public void DelegateClick(Vector3 worldCoordOfClick)
     {
-        if( this.CurrentInputState == CommandState.BlankState)
+        if( this.CurrentGameMode == GameMode.BlankState)
         {
         }
-        else if (this.CurrentInputState == CommandState.DefineSupplyLinesStart)
+        else if (this.CurrentGameMode == GameMode.DefineSupplyLinesStart)
         {
-            //Debug.Log("CommandState.DefineSupplyLinesStart");
-            Object edgeResource = Resources.Load(@"SupplyEdgeBeingPlaced");
+            UnityEngine.Object edgeResource = Resources.Load(@"SupplyEdgeBeingPlaced");
 
-            //todo we should add a supply edge here. 
-            GameObject edgeTest = Object.Instantiate(edgeResource, Vector3.zero, Quaternion.identity) as GameObject;
+            GameObject edgeTest = UnityEngine.Object.Instantiate(edgeResource, Vector3.zero, Quaternion.identity) as GameObject;
             this.IntermediateEdge = edgeTest.GetComponent(typeof(SupplyEdge)) as SupplyEdgeBeingPlaced;
             this.IntermediateEdge.startPos = Vector3.zero;
-            this.CurrentInputState = CommandState.DefineSupplyLine;
+            this.CurrentGameMode = GameMode.DefineSupplyLine;
         }
-        else if (this.CurrentInputState == CommandState.DefineSupplyLine)
+        else if (this.CurrentGameMode == GameMode.DefineSupplyLine)
         {
-            //Debug.Log("CommandState.DefineSupplyLine");
-
             if(this.IntermediateEdge.isValid)
             {
                 Vector2 mousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
@@ -85,7 +126,7 @@ public class GamePlayState
                 this.IntermediateEdge.startPos = endPointOfLastEdge ;
             }
         }
-        else if (this.CurrentInputState == CommandState.RequisitionSoldiers)
+        else if (this.CurrentGameMode == GameMode.OrderUnitMovementMode)
         {
             this.IntermediateEdge.gameObject.SetActive(false);
             Debug.Log("Requisition");
@@ -107,7 +148,7 @@ public class GamePlayState
             if(inputEvent is CommandEvent)
             {
                 CommandEvent commandEvent = (CommandEvent)inputEvent;
-                this.CurrentInputState = commandEvent.Command;
+                this.CurrentGameMode = commandEvent.Command;
                 DelegateClick(inputEvent.worldPosition);
                 eventsToRemove.Add (inputEvent);
             }

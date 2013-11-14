@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +41,7 @@ public class Building : MonoBehaviour
             collider.sharedMesh = mesh.sharedMesh;
             this._entryPointPositions = new List<Vector3>();
 
-            Object doorResource = Resources.Load(@"Door");
+            UnityEngine.Object doorResource = Resources.Load(@"Door");
             Vector3 doorPosition = new Vector3(
                     this.transform.position.x + mesh.sharedMesh.bounds.center.x,
                     this.transform.position.y,
@@ -48,7 +49,7 @@ public class Building : MonoBehaviour
 
             this._entryPointPositions.Add(doorPosition);
 
-            GameObject doorObject = Object.Instantiate(
+            GameObject doorObject = UnityEngine.Object.Instantiate(
                     doorResource, 
                     doorPosition, 
                     Quaternion.identity) as GameObject;
@@ -173,6 +174,22 @@ public class Building : MonoBehaviour
         get
         {
             return this._entryPointPositions;
+        }
+    }
+    
+    public bool isStartingPosition { get; set; }
+    
+    private Guid _Id;
+    public Guid buildingId
+    { 
+        get
+        {
+            if(this._Id == null || this._Id == Guid.Empty)
+            {
+                this._Id = Guid.NewGuid();
+            }
+            
+            return _Id;
         }
     }
 }

@@ -16,22 +16,15 @@ public class SupplyNetwork
     /// </summary>
     private SortedDictionary<int, SupplyNetwork.SupplyNode> NetworkNodes;
 
-    public SupplyNetwork(Vector3 startPos)
+    public SupplyNetwork(Army army)
     {
         NetworkNodes = new SortedDictionary<int, SupplyNode>();
         NetworkConnections = new Dictionary<int, List<int>>();
-        
-        int nodeId = 0;
-
-        // the first node always has id=0. 
-        this.NetworkNodes.Add (
-                nodeId, 
-                new SupplyNetwork.SupplyNode(){Position = startPos, NodeId = nodeId} );
-
-        // create an initial node at startPos. 
-        this.InstantiateNodeObject(startPos);
 
         // add nodes for all the entry points in our level. 
+        // caution is needed when changing, since we are calling a static method
+        // that does a lot of writing to various locations.  If this constructor
+        // is ever called twice in one succession, disaster might arise. 
         LevelV0.AddBuildingEntryPointsToNetwork(this);
     } 
 
@@ -53,7 +46,16 @@ public class SupplyNetwork
 
         entryPointPositions.ForEach( position =>
                 {
-                    int newId = this.NetworkNodes.Keys.Max () + 1;
+                    int newId;
+                    if(this.NetworkNodes.Keys.Count == 0)
+                    {
+                        newId = 0;
+                    }
+                    else
+                    {
+                        newId = this.NetworkNodes.Keys.Max () + 1;
+                    }
+
                     this.NetworkNodes.Add (newId,new SupplyNetwork.SupplyNode(){Position = position, NodeId = newId});
                     nodeIdsForThisBuilding.Add(newId);
                 });
@@ -177,6 +179,16 @@ public class SupplyNetwork
     }
 
     /// <summary>
+    /// the ID specified by startingPointNode is where our units begin at game start time. 
+    /// </summary>
+    private int startingPointNode { get; set; }
+
+    public void MarkAsStartingPoint(int nodeIdOfStartPoint)
+    {
+        this.startingPointNode = nodeIdOfStartPoint;
+    }
+
+    /// <summary>
     /// Supply node: internal node representation.  
     /// This class deals with the data and algorithms associated with the network, not the presentation. 
     /// </summary>
@@ -184,6 +196,7 @@ public class SupplyNetwork
     {
         public SupplyNode()
         {
+            this.UnitsInNode = new List<Unit>();
         }
 
         public SupplyNode(Vector3 position)
@@ -193,6 +206,7 @@ public class SupplyNetwork
 
         public Vector3 Position { get; set; }
         public int NodeId { get; set; }
+        public List<Unit> UnitsInNode {get; set;}
     }
 
     public List<int> shortestPath(int startId, int endId)
@@ -361,14 +375,17 @@ public class SupplyNetwork
         UnityEngine.Object unitResource = Resources.Load(@"Unit");
 
         Building selectedBuilding = LevelV0.GetSelectedBuilding();
+
+        // just take the first door of the selected building right now.  We aren't currently supporting 
+        // multiple doors, this will need to be changed and appropriately refactored at a future point. 
         int idForSelection = selectedBuilding.nodeIdsForEntryPoints.First();
         List<int> shortestPath = this.shortestPath(0, idForSelection);
 
         List<SupplyNetwork.SupplyNode> shortestPathCoords = shortestPath.Select(nodeId => 
                 new SupplyNetwork.SupplyNode()
                 {
-                    Position = new Vector2(this.NetworkNodes[nodeId].Position.x,this.NetworkNodes[nodeId].Position.y),
-                    NodeId = nodeId
+                Position = new Vector2(this.NetworkNodes[nodeId].Position.x,this.NetworkNodes[nodeId].Position.y),
+                NodeId = nodeId
                 }).ToList();
 
         Vector3 startPosition = this.NetworkNodes[shortestPath[0]].Position;
