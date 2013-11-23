@@ -388,14 +388,16 @@ public class SupplyNetwork
         return this.NetworkNodes[id];
     }
 
-    public void Requisition(Building selectedBuilding)
+    public void Requisition(Building originBuilding, Building destinationBuilding)
     {
         UnityEngine.Object unitResource = Resources.Load(@"Unit");
 
         // just take the first door of the selected building right now.  We aren't currently supporting 
         // multiple doors, this will need to be changed and appropriately refactored at a future point. 
-        int idForSelection = selectedBuilding.nodeIdsForEntryPoints.First();
-        List<int> shortestPath = this.shortestPath(0, idForSelection);
+        int idForDestination = destinationBuilding.nodeIdsForEntryPoints.First();
+        int idForOrigin = originBuilding.nodeIdsForEntryPoints.First();
+        
+        List<int> shortestPath = this.shortestPath(idForOrigin, idForDestination);
 
         List<SupplyNetwork.SupplyNode> shortestPathCoords = shortestPath.Select(nodeId => 
                 new SupplyNetwork.SupplyNode()

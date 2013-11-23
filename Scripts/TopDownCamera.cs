@@ -50,6 +50,10 @@ public class TopDownCamera : MonoBehaviour
                 {
                     mesh.material.color = Color.cyan;
                 }
+                else if(mesh.material.color == Color.cyan)
+                {
+                    mesh.material.color = Color.red;
+                }
                 else
                 {
                     mesh.material.color = Color.white;

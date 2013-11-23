@@ -156,7 +156,9 @@ public class GamePlayState : MonoBehaviour
         {
             this.IntermediateEdge.gameObject.SetActive(false);
             Debug.Log("Requisition");
-            GamePlayState.supplyLines.Requisition(this.LevelData.GetSelectedBuilding());
+            GamePlayState.supplyLines.Requisition(
+                    this.LevelData.GetOriginBuilding(),
+                    this.LevelData.GetDestinationBuilding());
         }
     }
 

@@ -149,6 +149,16 @@ public class LevelV0 : MonoBehaviour
     {
     }
 
+    public Building GetDestinationBuilding()
+    {
+        return GetBuildingByColor(Color.cyan);
+    }
+
+    public Building GetOriginBuilding()
+    {
+        return GetBuildingByColor(Color.red);
+    }
+
     /// <summary>
     /// Gets the selected building: one building in the level can be 'selected' at any time. 
     /// this function returns that one building. 
@@ -156,7 +166,7 @@ public class LevelV0 : MonoBehaviour
     /// <returns>
     /// The selected building.
     /// </returns>
-    public Building GetSelectedBuilding()
+    public Building GetBuildingByColor(Color color)
     {
         Building returnBuilding = null;
         try
@@ -165,7 +175,7 @@ public class LevelV0 : MonoBehaviour
                 {
                     MeshRenderer[] meshRenderer = building.GetComponentsInChildren<MeshRenderer>() as MeshRenderer[];
                     Color buildingColor = meshRenderer[1].material.color;
-                    if(buildingColor.Equals(Color.cyan))
+                    if(buildingColor.Equals(color))
                     {
                         return true;
                     }
