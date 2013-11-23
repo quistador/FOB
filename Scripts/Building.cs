@@ -22,6 +22,9 @@ public class Building : MonoBehaviour
     /// variable to prevent double instantiation of member variables. 
     /// </summary> 
     private bool isInitialized = false;
+    
+    private TextMesh UnitCountText;
+    private int UnitsInBuildingCount = 0;
 
     // Use this for initialization
     public void Start () 
@@ -69,7 +72,10 @@ public class Building : MonoBehaviour
                     cube.transform.position.z
                     );
         }
-    }
+        
+        this.UnitCountText = this.gameObject.GetComponentInChildren<TextMesh>() as TextMesh;
+    
+   }
 
     // Update is called once per frame
     void Update () 
@@ -91,21 +97,34 @@ public class Building : MonoBehaviour
             }
         }
 
-        // check for any events that indicate that a unit arrived in this building. 
-        List<GamePlayEvent> unitArrivedInThisBuilding = GamePlayEvents.Events.Where( 
-                gameEvent => gameEvent.eventKind == GamePlayEvent.EventKind.UnitArrived )
-            .ToList()
-            .Where(
-                    unitArrivedEvent => this.nodeIdsForEntryPoints.Contains(unitArrivedEvent.nodeId))
-            .ToList();
-
-		// if a unit has arrived in the building, remove the 'unitarrived' event from our
-		// event list and do something. 
-        if(unitArrivedInThisBuilding.Count > 0)
+        List<GamePlayEvent> eventsForThisBuilding = new List<GamePlayEvent>();
+        List<GamePlayEvent> unitArrivedInThisBuilding = new List<GamePlayEvent>();
+        List<GamePlayEvent> unitDepartedThisBuilding = new List<GamePlayEvent>();
+        
+        this.nodeIdsForEntryPoints.ForEach(nodeId =>
         {
-        	GamePlayEvents.Events.Remove(unitArrivedInThisBuilding.First());
+            GamePlayEvents.GetEventsForId(nodeId).ForEach( 
+                    gameEvent => eventsForThisBuilding.Add(gameEvent) );
+        });
+        
+        int unitsArrivedCount = eventsForThisBuilding.Where( ev => ev.eventKind == GamePlayEvent.EventKind.UnitArrived ).Count();
+        int unitsDepartedCount = eventsForThisBuilding.Where( ev => ev.eventKind == GamePlayEvent.EventKind.UnitDeparted ).Count ();
+        
+        this.UnitsInBuildingCount = this.UnitsInBuildingCount - unitsDepartedCount;
+        
+        // if a unit has arrived in the building, remove the 'unitarrived' event from our
+        // event list and do something. 
+        if(unitsArrivedCount > 0)
+        {
+            this.UnitsInBuildingCount = this.UnitsInBuildingCount + unitsArrivedCount;
             Debug.Log("unit arrived in building " + this.GetInstanceID() );
         }
+        
+        eventsForThisBuilding.ForEach( ev => 
+            GamePlayEvents.RemoveEvents(eventsForThisBuilding.First().nodeId, eventsForThisBuilding));
+            
+        
+        this.UnitCountText.text = String.Format ("Units: {0}", this.UnitsInBuildingCount);
     }
 
     /// <summary>

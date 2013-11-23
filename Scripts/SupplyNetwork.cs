@@ -16,7 +16,7 @@ public class SupplyNetwork
     /// </summary>
     private SortedDictionary<int, SupplyNetwork.SupplyNode> NetworkNodes;
 
-    public SupplyNetwork(Army army)
+    public SupplyNetwork(Army army, LevelV0 level)
     {
         NetworkNodes = new SortedDictionary<int, SupplyNode>();
         NetworkConnections = new Dictionary<int, List<int>>();
@@ -25,7 +25,25 @@ public class SupplyNetwork
         // caution is needed when changing, since we are calling a static method
         // that does a lot of writing to various locations.  If this constructor
         // is ever called twice in one succession, disaster might arise. 
-        LevelV0.AddBuildingEntryPointsToNetwork(this);
+        level.AddBuildingEntryPointsToNetwork(this);
+        
+        int startingPointId = level.Buildings.Single(building => building.isStartingPosition == true).nodeIdsForEntryPoints.First();
+        this.NetworkNodes[startingPointId].SquadsInNode = army.Squads;
+
+        // instead of adding new functions to 'initialize' the units in there initial starting building, 
+        // we'll reuse the Event Queue, adding 'unit arrived' events. 
+        army.Squads.ForEach( squad =>
+            GamePlayEvents.AddEvent( 
+            
+                startingPointId,
+                
+                new GamePlayEvent()
+                {
+                    nodeId = startingPointId ,
+                    eventKind = GamePlayEvent.EventKind.UnitArrived
+                }
+            ));
+
     } 
 
     /// <summary>
@@ -196,7 +214,7 @@ public class SupplyNetwork
     {
         public SupplyNode()
         {
-            this.UnitsInNode = new List<Unit>();
+            this.SquadsInNode = new List<Squad>();
         }
 
         public SupplyNode(Vector3 position)
@@ -206,7 +224,7 @@ public class SupplyNetwork
 
         public Vector3 Position { get; set; }
         public int NodeId { get; set; }
-        public List<Unit> UnitsInNode {get; set;}
+        public List<Squad> SquadsInNode {get; set;}
     }
 
     public List<int> shortestPath(int startId, int endId)
@@ -370,11 +388,9 @@ public class SupplyNetwork
         return this.NetworkNodes[id];
     }
 
-    public void Requisition()
+    public void Requisition(Building selectedBuilding)
     {
         UnityEngine.Object unitResource = Resources.Load(@"Unit");
-
-        Building selectedBuilding = LevelV0.GetSelectedBuilding();
 
         // just take the first door of the selected building right now.  We aren't currently supporting 
         // multiple doors, this will need to be changed and appropriately refactored at a future point. 
@@ -384,8 +400,8 @@ public class SupplyNetwork
         List<SupplyNetwork.SupplyNode> shortestPathCoords = shortestPath.Select(nodeId => 
                 new SupplyNetwork.SupplyNode()
                 {
-                Position = new Vector2(this.NetworkNodes[nodeId].Position.x,this.NetworkNodes[nodeId].Position.y),
-                NodeId = nodeId
+                    Position = new Vector2(this.NetworkNodes[nodeId].Position.x,this.NetworkNodes[nodeId].Position.y),
+                    NodeId = nodeId
                 }).ToList();
 
         Vector3 startPosition = this.NetworkNodes[shortestPath[0]].Position;

@@ -11,10 +11,9 @@ public class LevelV0 : MonoBehaviour
 
     private GamePlayState gamePlayState;
 
-    private static List<Building> buildings;
+    private List<Building> buildings;
 
-    // Use this for initialization
-    void Start () 
+    public void Initialize()
     {
         buildings = new List<Building>();
 
@@ -137,19 +136,17 @@ public class LevelV0 : MonoBehaviour
         // we currently don't have a user input way of doing it). Choose the first 
         // building, change this methodology in later levels. 
         buildings.First().isStartingPosition = true;
+    }
 
-        gamePlayState = new GamePlayState(buildings);
+    // Use this for initialization
+    void Start () 
+    {
+    
     }
 
     // Update is called once per frame
     void Update () 
     {
-        this.gamePlayState.CurrentMouseWorldCoordinate = new Vector3(
-            (float)Input.mousePosition.x, 
-            (float)Input.mousePosition.y, 
-            0f);
-            
-        this.gamePlayState.UpdateState();
     }
 
     /// <summary>
@@ -159,7 +156,7 @@ public class LevelV0 : MonoBehaviour
     /// <returns>
     /// The selected building.
     /// </returns>
-    public static Building GetSelectedBuilding()
+    public Building GetSelectedBuilding()
     {
         Building returnBuilding = null;
         try
@@ -187,7 +184,7 @@ public class LevelV0 : MonoBehaviour
         return returnBuilding;
     }
 
-    public static void AddBuildingEntryPointsToNetwork(SupplyNetwork network)
+    public void AddBuildingEntryPointsToNetwork(SupplyNetwork network)
     {
         buildings.ForEach( building => 
                 {
@@ -202,9 +199,9 @@ public class LevelV0 : MonoBehaviour
                 });
     }
 
-    public static List<Vector3> GetEntryPointPositionsInLevel()
+    public List<Vector3> GetEntryPointPositionsInLevel()
     {
-        List<Vector3> doorPositions = buildings.SelectMany( building => 
+        List<Vector3> doorPositions = this.buildings.SelectMany( building => 
                 {
                 // problem:  if we use the door position as the entry point position (which initially seems like the 
                 // logical thing to do), then our 'supplyEdgeBeingPlaced' will intersect with the building (since it starts
@@ -247,5 +244,10 @@ public class LevelV0 : MonoBehaviour
                 }).ToList();
 
         return doorPositions;
+    }
+
+    public List<Building> Buildings
+    {
+        get { return this.buildings; }
     }
 }

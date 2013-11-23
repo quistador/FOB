@@ -4,10 +4,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
+
+/// <summary>
+/// Unit is the class that visually depicts squads in the game.
+/// </summary>
 public class Unit : MonoBehaviour 
 {
     private Vector2 destinationPosition;
-    private float speed = 0.01f;
+    private float speed = 0.1f;
     Vector2 directionToDestination;
     Guid identifier;
 
@@ -21,6 +25,8 @@ public class Unit : MonoBehaviour
     /// The current index on path.
     /// </summary>
     int currentIndexOnPath;
+    
+    bool justStartingPath = true;
 
     // Use this for initialization
     void Start () 
@@ -48,6 +54,21 @@ public class Unit : MonoBehaviour
             float distanceToNextNode = Vector2.Distance(
                     new Vector2(this.transform.position.x,this.transform.position.y),
                     this.pathToFollow[currentIndexOnPath].Position);
+                    
+            // are we just starting the path?  if so,
+            // add a unit departing event so that gameplay knows that 
+            // our unit exited a building. 
+            if(this.justStartingPath == true && currentIndexOnPath == 0)
+            {
+                GamePlayEvents.AddEvent( 
+                    this.pathToFollow[currentIndexOnPath].NodeId,
+                    new GamePlayEvent()
+                    {
+                        nodeId = this.pathToFollow[currentIndexOnPath].NodeId,
+                        eventKind = GamePlayEvent.EventKind.UnitDeparted
+                    }
+                );
+            }
 
             // Check and see if we are close enough to our next node. 
             // we have to treat the last leg of the journey as a special case, so check 
@@ -71,11 +92,12 @@ public class Unit : MonoBehaviour
                 if( distanceToNextNode < threshold )
                 {
                     // return here.  We don't want the node to continue updating it's position. 
-                    GamePlayEvents.Events.Add( 
+                    GamePlayEvents.AddEvent( 
+                        this.pathToFollow[currentIndexOnPath].NodeId,
                         new GamePlayEvent()
                         {
                             nodeId = this.pathToFollow[currentIndexOnPath].NodeId,
-                         eventKind = GamePlayEvent.EventKind.UnitArrived
+                            eventKind = GamePlayEvent.EventKind.UnitArrived
                         }
                     );
                     this.SetPath(new List<SupplyNetwork.SupplyNode>());
@@ -92,8 +114,8 @@ public class Unit : MonoBehaviour
 
             directionToDestination.Normalize();
             Vector3 newPosition = new Vector3(
-                    this.transform.position.x + this.directionToDestination.x * speed,
-                    this.transform.position.y + this.directionToDestination.y * speed,
+                    this.transform.position.x + this.directionToDestination.x * speed * Time.deltaTime,
+                    this.transform.position.y + this.directionToDestination.y * speed * Time.deltaTime,
                     this.transform.position.z);
 
             //Debug.Log(System.String.Format("travelling distance: {0}", Vector3.Distance(this.transform.position, newPosition)));

@@ -4,8 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-
-public class GamePlayState 
+public class GamePlayState : MonoBehaviour
 {
     private static SupplyNetwork supplyLines;
     private SupplyEdgeBeingPlaced IntermediateEdge;
@@ -17,6 +16,60 @@ public class GamePlayState
     private Army redTeam;
 
     private Dictionary<Guid, Building> buildingIdToBuildingInfo;
+
+    private LevelV0 LevelData;
+
+    // Use this for initialization
+    void Start () 
+    {
+        UnityEngine.Object levelV0 = Resources.Load(@"LevelV0");
+        GameObject levelV0Object = UnityEngine.Object.Instantiate(levelV0, Vector3.zero, Quaternion.identity) as GameObject;
+        this.LevelData = levelV0Object.GetComponent(typeof(LevelV0)) as LevelV0;
+        this.LevelData.Initialize();
+
+        this.blueTeamProfile = new Profile("testProfile");
+        this.redTeamProfile = new Profile("testEnemyTeam");
+
+        this.redTeam = new Army(this.redTeamProfile);
+        this.blueTeam = new Army(this.blueTeamProfile);
+
+        this.CurrentGameMode = GameMode.BlankState;
+        this.buildingIdToBuildingInfo = new Dictionary<Guid, Building>();
+  
+        int armyStartingPointNodeId = -1;
+
+        List<Building> buildings = this.LevelData.Buildings;
+
+        // care needs to be taken on *where* we instantiate the supply lines:
+        // note that the SupplyNetwork constructor performs writes to a static class field. 
+        // This isn't preferable, and it's something that should be refactored soon. 
+        GamePlayState.supplyLines = new SupplyNetwork(this.blueTeam, this.LevelData);
+        foreach(Building building in buildings)
+        {
+            this.buildingIdToBuildingInfo.Add(building.buildingId, building);
+
+            if(building.isStartingPosition)
+            {
+                armyStartingPointNodeId = building.nodeIdsForEntryPoints.First();
+
+                // if this building is a starting point for all of our units, then 
+                // we need to let our supply network 'know', so that it knows where to 
+                // position our units in the initial configuration. 
+                GamePlayState.supplyLines.MarkAsStartingPoint(building.nodeIdsForEntryPoints.First());
+            }
+        }
+    }
+
+    // Update is called once per frame
+    void Update () 
+    {
+        this.CurrentMouseWorldCoordinate = new Vector3(
+            (float)Input.mousePosition.x, 
+            (float)Input.mousePosition.y, 
+            0f);
+
+        this.ProcessInputEvents();
+    }
 
     public enum GameMode
     {
@@ -52,36 +105,9 @@ public class GamePlayState
         OrderUnitMovementMode
     }
 
-    public GamePlayState(List<Building> buildings)
+    public GamePlayState()
     {
-        this.blueTeamProfile = new Profile("testProfile");
-        this.redTeamProfile = new Profile("testEnemyTeam");
 
-        this.redTeam = new Army(this.redTeamProfile);
-        this.blueTeam = new Army(this.blueTeamProfile);
-
-        // care needs to be taken on *where* we instantiate the supply lines:
-        // note that the SupplyNetwork constructor performs writes to a static class field. 
-        // This isn't preferable, and it's something that should be refactored soon. 
-        GamePlayState.supplyLines = new SupplyNetwork(this.blueTeam);
-        this.CurrentGameMode = GameMode.BlankState;
-        this.buildingIdToBuildingInfo = new Dictionary<Guid, Building>();
-  
-        int armyStartingPointNodeId = -1;
-        foreach(Building building in buildings)
-        {
-            this.buildingIdToBuildingInfo.Add(building.buildingId, building);
-
-            if(building.isStartingPosition)
-            {
-                armyStartingPointNodeId = building.nodeIdsForEntryPoints.First();
-
-                // if this building is a starting point for all of our units, then 
-                // we need to let our supply network 'know', so that it knows where to 
-                // position our units in the initial configuration. 
-                GamePlayState.supplyLines.MarkAsStartingPoint(building.nodeIdsForEntryPoints.First());
-            }
-        }
     }
 
     private GameMode _CurrentGameMode;
@@ -130,7 +156,7 @@ public class GamePlayState
         {
             this.IntermediateEdge.gameObject.SetActive(false);
             Debug.Log("Requisition");
-            GamePlayState.supplyLines.Requisition();
+            GamePlayState.supplyLines.Requisition(this.LevelData.GetSelectedBuilding());
         }
     }
 
@@ -138,7 +164,7 @@ public class GamePlayState
     /// Updates the state:  this causes the State to look for relevent events in the queue
     /// and do other update logic.  
     /// </summary>
-    public void UpdateState()
+    private void ProcessInputEvents()
     {
         List<InputEvent> events = EventQueue.GetEventQueue();
         List<InputEvent> eventsToRemove = new List<InputEvent>();

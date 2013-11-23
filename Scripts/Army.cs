@@ -30,6 +30,11 @@ public class Army
         _Squads.Add (new Squad(Squad.SquadType.Assault));
         _Squads.Add (new Squad(Squad.SquadType.Marksman));
     }
+    
+    public List<Squad> Squads
+    {
+        get {return this._Squads;}
+    }
 }
 
 /// <summary>
