@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -6,10 +7,12 @@ public class TopDownCamera : MonoBehaviour
 {
     private int leftPaneWidth = 100;
     private bool unitPaneShown = false;
+    private List<InputEvent> allEvents;
 
     // Use this for initialization
     void Start () 
     {
+        this.allEvents = new List<InputEvent>();
     }
 
     // Update is called once per frame
@@ -30,21 +33,21 @@ public class TopDownCamera : MonoBehaviour
                 && 
 
                 // we don't process clicks that happen in the left pane (where our buttons are). 
-                Input.mousePosition.x > this.leftPaneWidth)
+            Input.mousePosition.x > this.leftPaneWidth)
         {
             //Debug.Log(string.Format("clickin on screen coordinates -- x:{0},y:{1},arctan(x/y):{2}", Input.mousePosition.x,Input.mousePosition.y,System.Math.Atan(Input.mousePosition.x/Input.mousePosition.y) * (180f/Mathf.PI)));
             RaycastHit hit;
 
             // I'm not sure what's going on with the z coordinate here:  when it's negative, things seem to work out the way that I want it to
             // though I have no idea why.  It's also necessary to reset the z-coord to the camera transform position. 
-            Vector3 worldCoordsOfClick = camera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, -transform.position.z));
-            worldCoordsOfClick.z = transform.position.z;
+            Vector3 worldCoordsOfClick = camera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, camera.nearClipPlane));
+            
 
-            //Debug.Log(string.Format ("worldCoordsOf Click: [{0},{1},{2}]",worldCoordsOfClick.x, worldCoordsOfClick.y, worldCoordsOfClick.z));
-            //Debug.Log (string.Format("worldCoordsOf Camer: [{0},{1},{2}]",transform.position.x,transform.position.y,transform.position.z));
-            if (Physics.Raycast(worldCoordsOfClick, transform.forward, out hit, 10f))
+            Debug.Log(string.Format ("worldCoordsOf Click: [{0},{1},{2}]",worldCoordsOfClick.x, worldCoordsOfClick.y, worldCoordsOfClick.z));
+            Debug.Log (string.Format("worldCoordsOf Camer: [{0},{1},{2}]",transform.position.x,transform.position.y,transform.position.z));
+            if (Physics.Raycast(worldCoordsOfClick, (worldCoordsOfClick - camera.transform.position), out hit, 100f))
             {
-                //Debug.Log("Clicked on" + hit.collider.gameObject.name);
+                Debug.Log("Clicked on" + hit.collider.gameObject.name);
                 MeshRenderer mesh = hit.collider.gameObject.GetComponent<MeshRenderer>() as MeshRenderer;
                 if(mesh.material.color == Color.white)
                 {
@@ -61,10 +64,12 @@ public class TopDownCamera : MonoBehaviour
             }
 
             EventQueue.AddToEventQueue(new InputEvent(worldCoordsOfClick, transform.forward));
+            this.allEvents.Add (new InputEvent(worldCoordsOfClick, transform.forward));
         }
 
         // draw debug rays for each click. 
-        EventQueue.GetEventQueue().ForEach( e => Debug.DrawRay(e.worldPosition, e.forward * 100.0f, Color.white));
+        this.allEvents.ForEach( e => Debug.DrawRay(e.worldPosition, (e.worldPosition - camera.transform.position) * 100.0f, Color.white));
+        this.allEvents.ForEach( e => Debug.DrawLine(e.worldPosition, e.worldPosition + new Vector3(0.1f, 0.1f, 0.0f), Color.red) );
     }
 
     /// <summary>

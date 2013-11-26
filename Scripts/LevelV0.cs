@@ -187,8 +187,7 @@ public class LevelV0 : MonoBehaviour
         }
         catch(System.Exception e)
         {
-            Debug.Log("asdfasdf");
-            throw e;
+            Debug.Log("exception due to non-singular building colors.  Swallowing this exception until dev progresses...");
         }
 
         return returnBuilding;

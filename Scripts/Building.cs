@@ -7,7 +7,7 @@ using System.Linq;
 public class Building : MonoBehaviour 
 {
     public Material material;
-
+    
     /// <summary>
     /// Probably not-traditional and potentially confusing, but here's the deal with 'isInitialized'. 
     /// Start() is typically called at a point not entirely in our control. 
@@ -73,6 +73,10 @@ public class Building : MonoBehaviour
                     );
         }
         
+        if(this.nodeIdsForEntryPoints == null)
+        {
+            this.nodeIdsForEntryPoints = new List<int>();
+        }
         this.UnitCountText = this.gameObject.GetComponentInChildren<TextMesh>() as TextMesh;
     
    }
