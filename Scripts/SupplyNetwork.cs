@@ -40,10 +40,10 @@ public class SupplyNetwork
                 new GamePlayEvent()
                 {
                     nodeId = startingPointId ,
+                    id = squad.id,
                     eventKind = GamePlayEvent.EventKind.UnitArrived
                 }
             ));
-
     } 
 
     /// <summary>
@@ -79,6 +79,19 @@ public class SupplyNetwork
                 });
 
         return nodeIdsForThisBuilding;
+    }
+
+    /// <summary>
+    /// Adds the edge to the supply network at position endNodePosition
+    /// </summary>
+    /// <param name='endNodePosition'>
+    /// End node position.
+    /// </param>
+    /// <returns>
+    /// the x/y position that the new edge terminated at. 
+    /// </returns>
+    public List<int> GetConnectedBuildings(List<int> startIds)
+    {
     }
 
     /// <summary>

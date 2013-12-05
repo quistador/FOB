@@ -48,6 +48,13 @@ public class TopDownCamera : MonoBehaviour
             if (Physics.Raycast(worldCoordsOfClick, (worldCoordsOfClick - camera.transform.position), out hit, 100f))
             {
                 Debug.Log("Clicked on" + hit.collider.gameObject.name);
+                Squad clickedOnSquadSlot = UnitsInBuilding.getSquadForClick(hit.collider.gameObject);
+
+                if(clickedOnSquadSlot != null)
+                {
+                    Debug.Log("clicked on squad id " + clickedOnSquadSlot.id);
+                }
+
                 MeshRenderer mesh = hit.collider.gameObject.GetComponent<MeshRenderer>() as MeshRenderer;
                 if(mesh.material.color == Color.white)
                 {

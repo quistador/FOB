@@ -52,5 +52,6 @@ public class GamePlayEvents
     public static void RemoveEvents(int nodeId, List<GamePlayEvent> eventsToRemove)
     {
         eventsToRemove.ForEach( ev => Events[nodeId].Remove(ev) );
+        Debug.Log(string.Format ("Removing Events from node {0}, count now: {1}",nodeId,Events[nodeId].Count));
     }
 }

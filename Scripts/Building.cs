@@ -24,7 +24,10 @@ public class Building : MonoBehaviour
     private bool isInitialized = false;
     
     private TextMesh UnitCountText;
+    private List<Squad> SquadsInBuilding;
     private int UnitsInBuildingCount = 0;
+
+    private UnitsInBuilding SquadsInBuildingChildObject;
 
     // Use this for initialization
     public void Start () 
@@ -71,6 +74,11 @@ public class Building : MonoBehaviour
                     cube.transform.position.y + buildingWidth/2,
                     cube.transform.position.z
                     );
+
+            SquadsInBuilding = new List<Squad>();
+
+            /// we'll be referencing this child component regularly, so store a local copy. 
+            this.SquadsInBuildingChildObject = this.gameObject.GetComponentInChildren<UnitsInBuilding>() as UnitsInBuilding;
         }
         
         if(this.nodeIdsForEntryPoints == null)
@@ -78,7 +86,6 @@ public class Building : MonoBehaviour
             this.nodeIdsForEntryPoints = new List<int>();
         }
         this.UnitCountText = this.gameObject.GetComponentInChildren<TextMesh>() as TextMesh;
-    
    }
 
     // Update is called once per frame
@@ -102,33 +109,56 @@ public class Building : MonoBehaviour
         }
 
         List<GamePlayEvent> eventsForThisBuilding = new List<GamePlayEvent>();
-        List<GamePlayEvent> unitArrivedInThisBuilding = new List<GamePlayEvent>();
-        List<GamePlayEvent> unitDepartedThisBuilding = new List<GamePlayEvent>();
         
         this.nodeIdsForEntryPoints.ForEach(nodeId =>
         {
             GamePlayEvents.GetEventsForId(nodeId).ForEach( 
                     gameEvent => eventsForThisBuilding.Add(gameEvent) );
         });
+
+        int unitsArrivedCount = 0;
+        eventsForThisBuilding
+            .Where(ev => ev.eventKind == GamePlayEvent.EventKind.UnitArrived).ToList()
+            .ForEach( ev =>
+                {
+                    this.SquadsInBuilding.Add (GamePlayState.GetSquadById(ev.id));
+                    unitsArrivedCount++;
+                });
+
+        int unitsDepartedCount = 0;
+
+        eventsForThisBuilding
+            .Where(ev => ev.eventKind == GamePlayEvent.EventKind.UnitDeparted).ToList()
+            .ForEach( ev =>
+                {
+                    this.SquadsInBuilding.Remove(GamePlayState.GetSquadById(ev.id));
+                    unitsDepartedCount++;
+                });
+
+        //int unitsArrivedCount = eventsForThisBuilding.Where( ev => ev.eventKind == GamePlayEvent.EventKind.UnitArrived ).Count();
+        //int unitsDepartedCount = eventsForThisBuilding.Where( ev => ev.eventKind == GamePlayEvent.EventKind.UnitDeparted ).Count ();
         
-        int unitsArrivedCount = eventsForThisBuilding.Where( ev => ev.eventKind == GamePlayEvent.EventKind.UnitArrived ).Count();
-        int unitsDepartedCount = eventsForThisBuilding.Where( ev => ev.eventKind == GamePlayEvent.EventKind.UnitDeparted ).Count ();
-        
-        this.UnitsInBuildingCount = this.UnitsInBuildingCount - unitsDepartedCount;
+        //this.UnitsInBuildingCount = this.UnitsInBuildingCount - unitsDepartedCount;
         
         // if a unit has arrived in the building, remove the 'unitarrived' event from our
         // event list and do something. 
         if(unitsArrivedCount > 0)
         {
-            this.UnitsInBuildingCount = this.UnitsInBuildingCount + unitsArrivedCount;
-            Debug.Log("unit arrived in building " + this.GetInstanceID() );
+            //this.UnitsInBuildingCount = this.UnitsInBuildingCount + unitsArrivedCount;
+            this.UnitsInBuildingCount = this.SquadsInBuilding.Count();
+            Debug.Log(this.UnitsInBuildingCount +" unit(s) arrived in building " + this.GetInstanceID() );
         }
         
-        eventsForThisBuilding.ForEach( ev => 
-            GamePlayEvents.RemoveEvents(eventsForThisBuilding.First().nodeId, eventsForThisBuilding));
-            
-        
+        if(eventsForThisBuilding.Count > 0 )
+        {
+            GamePlayEvents.RemoveEvents(eventsForThisBuilding.First().nodeId, eventsForThisBuilding);
+        }
+
         this.UnitCountText.text = String.Format ("Units: {0}", this.UnitsInBuildingCount);
+
+        // our child object is responsible for visually depicting the units, update that field so that 
+        // it knows that updates have occurred. 
+        this.SquadsInBuildingChildObject.squads = this.SquadsInBuilding;
     }
 
     /// <summary>

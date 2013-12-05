@@ -54,11 +54,36 @@ public class Squad
 
     public Squad()
     {
+        this.id = Guid.NewGuid();
     }
 
-    public Squad(Squad.SquadType type)
+    public Squad(Squad.SquadType type) : this()
     {
+        this.squadType = type;
     }
 
-    private Squad.SquadType _type;
+    public Guid id { get; set; }
+    public Squad.SquadType squadType { get; set; }
+    public string squadTypeDisplayName
+    {
+        get
+        {
+            switch(this.squadType)
+            {
+            case Squad.SquadType.Assault:
+                return "Assault Squad";
+                break;
+            case Squad.SquadType.Marksman:
+                return "Marksman Squad";
+                break;
+            case Squad.SquadType.Rifle:
+                return "Rifle Squad";
+                break;
+            default:
+                return "unspecified squad type!";
+                break;
+            }
+
+        }
+    }
 }

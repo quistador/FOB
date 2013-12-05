@@ -17,11 +17,20 @@ public class GamePlayState : MonoBehaviour
 
     private Dictionary<Guid, Building> buildingIdToBuildingInfo;
 
+    /// <summary>
+    /// static dictionary mapping all squad guids to current squad state. 
+    /// as game play progresses, updates to the state of different squads should be made to this structure, 
+    /// not to the Army objects (which are generally used for persisting army state between games, not in-game 
+    /// updates). 
+    /// </summary>
+    private static Dictionary<Guid, Squad> squadIdToSquadInfo;
+
     private LevelV0 LevelData;
 
     // Use this for initialization
     void Start () 
     {
+
         UnityEngine.Object levelV0 = Resources.Load(@"LevelV0");
         GameObject levelV0Object = UnityEngine.Object.Instantiate(levelV0, Vector3.zero, Quaternion.identity) as GameObject;
         this.LevelData = levelV0Object.GetComponent(typeof(LevelV0)) as LevelV0;
@@ -32,6 +41,11 @@ public class GamePlayState : MonoBehaviour
 
         this.redTeam = new Army(this.redTeamProfile);
         this.blueTeam = new Army(this.blueTeamProfile);
+
+        squadIdToSquadInfo = new Dictionary<Guid, Squad>();
+
+        this.redTeam.Squads.ForEach( squad => squadIdToSquadInfo[squad.id] = squad );
+        this.blueTeam.Squads.ForEach( squad => squadIdToSquadInfo[squad.id] = squad );
 
         this.CurrentGameMode = GameMode.BlankState;
         this.buildingIdToBuildingInfo = new Dictionary<Guid, Building>();
@@ -195,5 +209,10 @@ public class GamePlayState : MonoBehaviour
     public static SupplyNetwork GetSupplyLines()
     {
         return GamePlayState.supplyLines;
+    }
+
+    public static Squad GetSquadById(Guid id)
+    {
+        return squadIdToSquadInfo[id];
     }
 }
