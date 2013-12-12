@@ -82,16 +82,53 @@ public class SupplyNetwork
     }
 
     /// <summary>
-    /// Adds the edge to the supply network at position endNodePosition
+    /// inputs a list of nodes, returns all nodeIds that are connected to those nodes by a 
+    /// supply line. 
     /// </summary>
-    /// <param name='endNodePosition'>
-    /// End node position.
+    /// <param name='startIds'>
+    /// a list of nodeIds.  
     /// </param>
     /// <returns>
-    /// the x/y position that the new edge terminated at. 
+    /// all node ids that are connected to the input list of node ids. 
     /// </returns>
     public List<int> GetConnectedBuildings(List<int> startIds)
     {
+        HashSet<int> visitedNodes = new HashSet<int>(startIds);
+        startIds.ForEach( node => 
+        {
+            visitedNodes = new HashSet<int>(visitedNodes.Union(GetConnectedBuildings(visitedNodes, node)));
+        });
+
+        return visitedNodes.ToList();
+    }
+
+    private HashSet<int> GetConnectedBuildings(HashSet<int> visitedNodes, int currentNode)
+    {
+        // get all nodes that are neighboring our current node, and *not* 
+        // already in our visited neighbor set.  start with a list... 
+        List<int> unvisitedNeighborList = this.NetworkConnections[currentNode].Where (
+                potentialNode => !visitedNodes.Contains(potentialNode)).ToList();
+
+        // ... use the list to initialize a hashSet. 
+        HashSet<int> unvisitedNeighborNodes = new HashSet<int>(unvisitedNeighborList);
+
+        if(unvisitedNeighborNodes.Count == 0)
+        {
+            // we've reached our base case, return an empty set;
+            return new HashSet<int>();
+        }
+
+
+        // add all our unvisited neighbors to the visited list
+        visitedNodes = new HashSet<int>(visitedNodes.Union(unvisitedNeighborNodes));
+        foreach(int nodeId in this.NetworkConnections[currentNode])
+        {
+            // recurse!
+            visitedNodes = new HashSet<int>(visitedNodes.Union( GetConnectedBuildings(visitedNodes, nodeId) ));
+        }
+
+        return visitedNodes;
+        
     }
 
     /// <summary>
@@ -240,13 +277,15 @@ public class SupplyNetwork
         public List<Squad> SquadsInNode {get; set;}
     }
 
+    /// <summary>
+    /// finds shortest path from startId to endId. 
+    /// </summary>
     public List<int> shortestPath(int startId, int endId)
     {
         if(this.NetworkNodes.Count == 0 )
         {
             return null;
         }
-        SupplyNode end = this.NetworkNodes[endId];
 
         Dictionary<int, int> cameFrom = new Dictionary<int, int>();
         List<int> openList = new List<int>();
@@ -268,12 +307,13 @@ public class SupplyNetwork
         {
             // get the point in the open list with the lowest f-cost. 
             int p = openList.Aggregate(openList[0], (currentMin, x) => (fCost[x] < fCost[currentMin]) ? x : currentMin);
+
             if(p == endId)
             {
+                // we're at the end id, reconstruct the path and return it. 
                 List<int> path = new List<int>();
                 path = reconstructPath(cameFrom, endId, path);
                 path.Add (endId);
-                //List<SupplyNode> pathInGameCoords = path.Select(point => new Vector2(point.Position.x,point.Position.y)).ToList();
                 return path;
             }
 
@@ -287,7 +327,6 @@ public class SupplyNetwork
             neighbors = neighbors.Where(neighbor =>
                     !openList.Contains(neighbor) && !closedList.Contains(neighbor)
                     ).ToList();
-
 
             foreach (int possibleLink in neighbors)
             {

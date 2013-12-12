@@ -25,6 +25,9 @@ public class GamePlayState : MonoBehaviour
     /// </summary>
     private static Dictionary<Guid, Squad> squadIdToSquadInfo;
 
+    public static Guid squadIdForStartDrag = new Guid();
+    private static List<int> buildingsConnectedToStartDragBuilding = new List<int>();
+
     private LevelV0 LevelData;
 
     // Use this for initialization
@@ -48,6 +51,8 @@ public class GamePlayState : MonoBehaviour
         this.blueTeam.Squads.ForEach( squad => squadIdToSquadInfo[squad.id] = squad );
 
         this.CurrentGameMode = GameMode.BlankState;
+        this.CurrentInputState = InputState.BlankState;
+    
         this.buildingIdToBuildingInfo = new Dictionary<Guid, Building>();
   
         int armyStartingPointNodeId = -1;
@@ -85,6 +90,10 @@ public class GamePlayState : MonoBehaviour
         this.ProcessInputEvents();
     }
 
+    /// <summary>
+    /// controls high level game aspects:
+    /// generally, keeping track of command mode or action mode. 
+    /// </summary>
     public enum GameMode
     {
         /// <summary>
@@ -101,7 +110,24 @@ public class GamePlayState : MonoBehaviour
         /// game mode where units act based on provided commands. Unlike other modes,
         /// commands are not entered in this mode. 
         /// </summary>
-        ActionMode,
+        ActionMode
+    }
+
+
+    /// <summary>
+    /// defines different input states, generally overlapping with the command state. 
+    /// this class keeps track of the different states we'll be in as the user 
+    /// starts and stops clicking to do things like define supply lines or unit movement orders. 
+    ///
+    /// InputState state can change for a variety of reasons, sometimes clicking on a UI button will cause a change, 
+    /// sometimes clicking somewhere in the play area will cause a change. 
+    /// </summary>
+    public enum InputState
+    {
+        /// <summary>
+        /// starting and default input mode. 
+        /// </summary>
+        BlankState,
 
         /// <summary>
         /// state when we've just started DefineSupplyLine state (UI button has just been pushed)
@@ -116,7 +142,12 @@ public class GamePlayState : MonoBehaviour
         /// <summary>
         /// Orders unit movement
         /// </summary>
-        OrderUnitMovementMode
+        OrderUnitMovementMode,
+
+        /// <summary>
+        /// Starts drag from a squad to another point. 
+        /// </summary>
+        SquadStartDrag
     }
 
     public GamePlayState()
@@ -124,17 +155,16 @@ public class GamePlayState : MonoBehaviour
 
     }
 
-    private GameMode _CurrentGameMode;
+    public InputState CurrentInputState
+    {
+        get;
+        set;
+    }
+
     public GameMode CurrentGameMode
     {
-        get
-        {
-            return this._CurrentGameMode;
-        } 
-        set
-        {
-            this._CurrentGameMode = value;
-        }
+        get;
+        set;
     }
 
     public Vector3 CurrentMouseWorldCoordinate
@@ -142,22 +172,67 @@ public class GamePlayState : MonoBehaviour
         get; set;
     }
 
-    public void DelegateClick(Vector3 worldCoordOfClick)
+    public void DelegateInputEvent(InputEvent inputEventInfo)
     {
-        if( this.CurrentGameMode == GameMode.BlankState)
+        // this function looks at the inputevent, and the current inputstate, to determine
+        // any actions to take, as well as transitioning to the next input state. 
+        Vector3 worldCoordOfClick = inputEventInfo.worldPosition;
+
+        if( this.CurrentInputState == InputState.BlankState)
         {
+            // ok, we're in the 'blank' state. 
+            if(inputEventInfo.interfaceEvent == InputEvent.EventType.WaypointButtonPressed)
+            {
+                // if the user clicked on the 'waypoint', put us in a supplyLinesStart state. 
+                this.CurrentInputState = InputState.DefineSupplyLinesStart;
+            }
+            else if(inputEventInfo.interfaceEvent == InputEvent.EventType.ClicksOnSquad)
+            {
+                // find the building that contains the squad. 
+                Building buildingWithSelectedSquadInIt = this.LevelData.Buildings.Find( building =>
+                    building.SquadIdsInThisBuilding.Contains(GamePlayState.squadIdForStartDrag) );
+
+                // get all node entry points for that building. 
+                List<int> doorsForBuilding = buildingWithSelectedSquadInIt.nodeIdsForEntryPoints;
+                List<int> buildingIdsForConnectedBuildings = GamePlayState.GetSupplyLines().GetConnectedBuildings( doorsForBuilding );
+                GamePlayState.buildingsConnectedToStartDragBuilding = buildingIdsForConnectedBuildings;
+
+                // the user clicked down on a squad... enter the ClicksOnSquad state (which should 
+                // be kept until the user releases the mouse button). 
+                this.CurrentInputState = InputState.SquadStartDrag;
+            }
         }
-        else if (this.CurrentGameMode == GameMode.DefineSupplyLinesStart)
+        else if (this.CurrentInputState == InputState.DefineSupplyLinesStart)
         {
+            if(inputEventInfo.interfaceEvent == InputEvent.EventType.WaypointButtonPressed)
+            {
+                // if the user clicked on the 'waypoint' button and we are already 
+                // defining supply lines, deactivate our intermediate edge and 
+                // go back to the blank state. 
+                this.CurrentInputState = InputState.BlankState;
+                this.IntermediateEdge.gameObject.SetActive(false);
+                return;
+            }
+
             UnityEngine.Object edgeResource = Resources.Load(@"SupplyEdgeBeingPlaced");
 
             GameObject edgeTest = UnityEngine.Object.Instantiate(edgeResource, Vector3.zero, Quaternion.identity) as GameObject;
             this.IntermediateEdge = edgeTest.GetComponent(typeof(SupplyEdge)) as SupplyEdgeBeingPlaced;
             this.IntermediateEdge.startPos = Vector3.zero;
-            this.CurrentGameMode = GameMode.DefineSupplyLine;
+            this.CurrentInputState = InputState.DefineSupplyLine;
         }
-        else if (this.CurrentGameMode == GameMode.DefineSupplyLine)
+        else if (this.CurrentInputState == InputState.DefineSupplyLine)
         {
+            if(inputEventInfo.interfaceEvent == InputEvent.EventType.WaypointButtonPressed)
+            {
+                // if the user clicked on the 'waypoint' button and we are already 
+                // defining supply lines, deactivate our intermediate edge and 
+                // go back to the blank state. 
+                this.CurrentInputState = InputState.BlankState;
+                this.IntermediateEdge.gameObject.SetActive(false);
+                return;
+            }
+
             if(this.IntermediateEdge.isValid)
             {
                 Vector2 mousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
@@ -166,13 +241,20 @@ public class GamePlayState : MonoBehaviour
                 this.IntermediateEdge.startPos = endPointOfLastEdge ;
             }
         }
-        else if (this.CurrentGameMode == GameMode.OrderUnitMovementMode)
+        else if (this.CurrentInputState == InputState.OrderUnitMovementMode)
         {
             this.IntermediateEdge.gameObject.SetActive(false);
             Debug.Log("Requisition");
             GamePlayState.supplyLines.Requisition(
                     this.LevelData.GetOriginBuilding(),
                     this.LevelData.GetDestinationBuilding());
+        }
+        else if (this.CurrentInputState == InputState.SquadStartDrag)
+        {
+            if(inputEventInfo.interfaceEvent == InputEvent.EventType.ReleasesMouseDown)
+            {
+                this.CurrentInputState = InputState.BlankState;
+            }
         }
     }
 
@@ -185,25 +267,41 @@ public class GamePlayState : MonoBehaviour
         List<InputEvent> events = EventQueue.GetEventQueue();
         List<InputEvent> eventsToRemove = new List<InputEvent>();
 
-        foreach(InputEvent inputEvent in events)
+        foreach(InputEvent inEvent in events)
         {
-            if(inputEvent is CommandEvent)
+            if(inEvent is CommandEvent)
             {
-                CommandEvent commandEvent = (CommandEvent)inputEvent;
+                CommandEvent commandEvent = (CommandEvent)inEvent;
                 this.CurrentGameMode = commandEvent.Command;
-                DelegateClick(inputEvent.worldPosition);
-                eventsToRemove.Add (inputEvent);
+                //DelegateInputEvent(inEvent.worldPosition);
+                eventsToRemove.Add (inEvent);
             }
             else
             {
                 // theres been a general mouseclick.  Take action on it, depending on our 
                 // current state. 
-                DelegateClick(inputEvent.worldPosition);
+                InputEvent inputEvent = (InputEvent)inEvent;
+                DelegateInputEvent(inputEvent);
                 eventsToRemove.Add(inputEvent);
             }
         }
 
         EventQueue.RemoveEvents(eventsToRemove);
+    }
+
+    public static bool IsBuildingPotentialDestinationForUnit(List<int> doorEntryPointIds)
+    {
+        // intersect the node ids of all connected buildings with the node id's of the entry points. 
+        // if the count is greater than zero, then return true. 
+        List<int> connections = GamePlayState.buildingsConnectedToStartDragBuilding.Intersect( doorEntryPointIds ).ToList();
+        if(connections.Count() > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public static SupplyNetwork GetSupplyLines()
@@ -214,5 +312,10 @@ public class GamePlayState : MonoBehaviour
     public static Squad GetSquadById(Guid id)
     {
         return squadIdToSquadInfo[id];
+    }
+
+    public Guid GetSquadStartDrag()
+    {
+        return GamePlayState.squadIdForStartDrag;
     }
 }

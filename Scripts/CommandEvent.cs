@@ -3,7 +3,6 @@ using System.Collections;
 
 public class CommandEvent : InputEvent 
 {
-
     public CommandEvent()
     {
     }

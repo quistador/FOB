@@ -102,17 +102,36 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 
     void OnTriggerEnter(Collider test)
     {
-        Debug.Log("trigger enter  " + test.gameObject.name);
         MeshRenderer meshRenderer = this.gameObject.GetComponent<MeshRenderer>();
         meshRenderer.material.color = Color.black;
-        this._isValid = false;
+
+
+        // since other collidable objects exist within the building, we've got to only
+        // update our 'isValid' reference when we collide enter/exit with buildings. 
+        //
+        // NOTE: something is wrong with the below code, the spirit is correct but
+        // there's a bug in it. 
+        if(!test.gameObject.name.Contains("BuildingSlotDescriptor"));
+        {
+            Debug.Log("trigger enter  " + test.gameObject.name);
+            this._isValid = false;
+        }
     }
 
     void OnTriggerExit(Collider test)
     {
-        Debug.Log("trigger exit  " + test.gameObject.name);
         MeshRenderer meshRenderer = this.gameObject.GetComponent<MeshRenderer>();
         meshRenderer.material.color = Color.white;
-        this._isValid = true;
+
+        // since other collidable objects exist within the building, we've got to only
+        // update our 'isValid' reference when we collide enter/exit with buildings. 
+        //
+        // NOTE: something is wrong with the below code, the spirit is correct but
+        // there's a bug in it. 
+        if(!test.gameObject.name.Contains("BuildingSlotDescriptor"));
+        {
+            Debug.Log("trigger exit  " + test.gameObject.name);
+            this._isValid = true;
+        }
     }
 }

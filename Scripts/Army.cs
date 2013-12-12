@@ -72,16 +72,12 @@ public class Squad
             {
             case Squad.SquadType.Assault:
                 return "Assault Squad";
-                break;
             case Squad.SquadType.Marksman:
                 return "Marksman Squad";
-                break;
             case Squad.SquadType.Rifle:
                 return "Rifle Squad";
-                break;
             default:
                 return "unspecified squad type!";
-                break;
             }
 
         }

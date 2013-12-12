@@ -9,8 +9,6 @@ public class LevelV0 : MonoBehaviour
     public Material buildingMaterial;
     public Material cityBlockMaterial;
 
-    private GamePlayState gamePlayState;
-
     private List<Building> buildings;
 
     public void Initialize()

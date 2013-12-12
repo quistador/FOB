@@ -91,6 +91,20 @@ public class Building : MonoBehaviour
     // Update is called once per frame
     void Update () 
     {
+        MeshRenderer cubeObject = this.transform.GetChild(0).GetComponentInChildren<MeshRenderer>() as MeshRenderer;
+
+        // is the user dragging a unit around, potentially targetting this
+        // building as a destination? if so, we need to 
+        // update the color of this building so that the user knows it's a valid location. 
+        if(GamePlayState.IsBuildingPotentialDestinationForUnit(this.nodeIdsForEntryPoints))
+        {
+            cubeObject.material.color = Color.green;
+        }
+        else
+        {
+            cubeObject.material.color = Color.white;
+        }
+
         // check for input events
         List<InputEvent> events = EventQueue.GetEventQueue();
         if(events == null)
@@ -222,6 +236,17 @@ public class Building : MonoBehaviour
     public static float buildingWidth = 0.6f;
 
     private List<Vector3> _entryPointPositions;
+
+    public List<Guid> SquadIdsInThisBuilding
+    {
+        get
+        {
+            TextSlot[] squads = this.gameObject.GetComponentsInChildren<TextSlot>() as TextSlot[];
+            List<Guid> returnList = squads.Select( squad => squad.squadForSlot.id ).ToList ();
+            return returnList;
+        }
+    }
+
     public List<Vector3> EntryPointPositions
     {
         get
