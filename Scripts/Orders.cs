@@ -6,7 +6,6 @@ using System.Linq;
 
 public class Orders 
 {
-
     public enum OrderCommand
     {
         MoveOrder
@@ -16,6 +15,10 @@ public class Orders
 
     public static void AddOrder(Order order)
     {
+        if(orders == null)
+        {
+            orders = new List<Order>();
+        }
         orders.Add(order);
     }
 }
@@ -30,6 +33,6 @@ public class Order
     }
 
     public Orders.OrderCommand command { get; set; }
-    public Squad squad {get; set;}
+    public Guid squadGuid {get; set;}
     public int targetNode {get; set;}
 }

@@ -84,7 +84,7 @@ public class TopDownCamera : MonoBehaviour
         else if(Input.GetMouseButtonUp(0))
         {
             Vector3 worldCoordsOfClick = camera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, camera.nearClipPlane));
-            EventQueue.AddToEventQueue(new InputEvent(worldCoordsOfClick, transform.forward, InputEvent.EventType.ReleasesMouseDown));
+            EventQueue.AddToEventQueue(new InputEvent(worldCoordsOfClick, transform.forward, InputEvent.EventType.ReleasesMouseDown, camera.transform.position));
         }
 
         // draw debug rays for each click. 

@@ -113,15 +113,7 @@ public class Building : MonoBehaviour
             // (no mouseclicks or other things yet)
             return;
         }
-        if(events.Count > 0)
-        {
-            if(Physics.Raycast(events[0].mouseClickForEvent))
-            {
-                //Debug.Log(string.Format("{0} was hit, setting color to magenta",this.gameObject.name));
-                //this.material.color = Color.white;
-            }
-        }
-
+ 
         List<GamePlayEvent> eventsForThisBuilding = new List<GamePlayEvent>();
         
         this.nodeIdsForEntryPoints.ForEach(nodeId =>
@@ -245,6 +237,24 @@ public class Building : MonoBehaviour
             List<Guid> returnList = squads.Select( squad => squad.squadForSlot.id ).ToList ();
             return returnList;
         }
+    }
+
+    /// <summary>
+    /// inputs a game object.  outputs true if the click is on a 'Building' object,
+    /// and returns the clicked on building via a ref parameter. 
+    /// </summary>
+    public static bool IsRaycastHittingBuilding(GameObject intersectedObject, ref Building building)
+    {
+        Building refBuilding = intersectedObject.transform.parent.gameObject.GetComponent<Building>() as Building;
+
+        if(refBuilding == null)
+        {
+            building = null;
+            return false;
+        }
+
+        building = refBuilding;
+        return true;
     }
 
     public List<Vector3> EntryPointPositions

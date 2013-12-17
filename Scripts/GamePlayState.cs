@@ -253,7 +253,33 @@ public class GamePlayState : MonoBehaviour
         {
             if(inputEventInfo.interfaceEvent == InputEvent.EventType.ReleasesMouseDown)
             {
+                Vector3 worldCoordsOfClick = inputEventInfo.worldPosition;
+                GamePlayState.buildingsConnectedToStartDragBuilding = new List<int>();
                 this.CurrentInputState = InputState.BlankState;
+                RaycastHit hit;
+
+                /// did the mouse release land on a building?
+                if (Physics.Raycast(worldCoordsOfClick, (worldCoordsOfClick - inputEventInfo.CameraPosition), out hit, 100f))
+                {
+                    Debug.Log("Release mouse on" + hit.collider.gameObject.name);
+                    Building clickedOnBuilding = null;
+
+                    // did our raycast hit a building?
+                    if(Building.IsRaycastHittingBuilding(hit.collider.gameObject, ref clickedOnBuilding))
+                    {
+                        Order movementOrder = new Order()
+                        { 
+                            command = Orders.OrderCommand.MoveOrder,
+                            squadGuid = GamePlayState.squadIdForStartDrag,
+                            targetNode = clickedOnBuilding.nodeIdsForEntryPoints.First()
+                        };
+
+                        // now that we've issued an order, clear out the 
+                        // field that identifies the unit that the order has been issued to. 
+                        GamePlayState.squadIdForStartDrag = Guid.Empty;
+                        Orders.AddOrder(movementOrder);
+                    }
+                }
             }
         }
     }

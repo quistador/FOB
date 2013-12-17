@@ -3,8 +3,6 @@ using System.Collections;
 
 public class InputEvent  
 {
-    private Ray mouseClickPosition;
-
     /// <summary>
     /// has something special happened hear?  such as a button click or a click 
     /// on a game object that needs to be handled specially? this enumeration
@@ -23,18 +21,17 @@ public class InputEvent
 
     public InputEvent()
     {
-        this.worldPosition = Vector3.zero;
-        this.forward = Vector3.zero;
-        this.interfaceEvent = InputEvent.EventType.MouseDown;
     }
 
-    public InputEvent(Vector3 worldPosition, Vector3 forward, InputEvent.EventType interfaceEvent)
+    public InputEvent(Vector3 worldPosition, Vector3 forward, InputEvent.EventType interfaceEvent, Vector3 cameraPosition) : this(worldPosition,forward,interfaceEvent)
     {
-        this.worldPosition = worldPosition;
-        this.forward = forward;
+        this.CameraPosition = cameraPosition;
+    }
+
+    public InputEvent(Vector3 worldPosition, Vector3 forward, InputEvent.EventType interfaceEvent) : this(worldPosition,forward)
+    {
         this.interfaceEvent = interfaceEvent;
     }
-
 
     public InputEvent(Vector3 worldPosition, Vector3 forward)
     {
@@ -62,8 +59,11 @@ public class InputEvent
         get; set;
     }
 
-    public Ray mouseClickForEvent
+    /// <summary>
+    /// the camera position when the input event was added. 
+    /// </summary>
+    public Vector3 CameraPosition
     {
-        get {return mouseClickPosition;}
+        get; set;
     }
 }
