@@ -177,6 +177,7 @@ public class GamePlayState : MonoBehaviour
         // this function looks at the inputevent, and the current inputstate, to determine
         // any actions to take, as well as transitioning to the next input state. 
         Vector3 worldCoordOfClick = inputEventInfo.worldPosition;
+        Debug.Log ("input event info: " + inputEventInfo.interfaceEvent.ToString());
 
         if( this.CurrentInputState == InputState.BlankState)
         {
@@ -233,12 +234,16 @@ public class GamePlayState : MonoBehaviour
                 return;
             }
 
-            if(this.IntermediateEdge.isValid)
+            // only add nodes when the mouse button is released, not when it's first pressed. 
+            if(inputEventInfo.interfaceEvent == InputEvent.EventType.ReleasesMouseDown)
             {
-                Vector2 mousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-                Vector3 worldPositionForMouse = TopDownCamera.ScreenToWorldPoint(mousePosition);
-                Vector3 endPointOfLastEdge = GamePlayState.supplyLines.AddEdge(worldPositionForMouse);
-                this.IntermediateEdge.startPos = endPointOfLastEdge ;
+                if(this.IntermediateEdge.isValid)
+                {
+                    Vector2 mousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+                    Vector3 worldPositionForMouse = TopDownCamera.ScreenToWorldPoint(mousePosition);
+                    Vector3 endPointOfLastEdge = GamePlayState.supplyLines.AddEdge(worldPositionForMouse);
+                    this.IntermediateEdge.startPos = endPointOfLastEdge ;
+                }
             }
         }
         else if (this.CurrentInputState == InputState.OrderUnitMovementMode)
