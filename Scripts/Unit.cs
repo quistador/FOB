@@ -4,7 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-
 /// <summary>
 /// Unit is the class that visually depicts squads in the game.
 /// </summary>
@@ -13,7 +12,6 @@ public class Unit : MonoBehaviour
     private Vector2 destinationPosition;
     private float speed = 0.1f;
     Vector2 directionToDestination;
-    Guid identifier;
 
     /// <summary>
     /// The path to follow, assuming that the unit is travelling along supply lines in 
@@ -33,7 +31,6 @@ public class Unit : MonoBehaviour
     {
         destinationPosition = new Vector2(0f,0f);
         currentIndexOnPath = 0;
-        this.identifier = Guid.NewGuid();
     }
 
     // Update is called once per frame
@@ -41,6 +38,12 @@ public class Unit : MonoBehaviour
     { 
         // update the positions of this unit, if it's moving along a supply line. 
         this.MoveUnitAlongSupplyLine();
+    }
+
+    public void Initialize(Guid squadId, List<SupplyNetwork.SupplyNode> path)
+    {
+        this.squadId = squadId;
+        this.SetPath(path);
     }
     
     private void MoveUnitAlongSupplyLine()
@@ -65,7 +68,8 @@ public class Unit : MonoBehaviour
                     new GamePlayEvent()
                     {
                         nodeId = this.pathToFollow[currentIndexOnPath].NodeId,
-                        eventKind = GamePlayEvent.EventKind.UnitDeparted
+                        eventKind = GamePlayEvent.EventKind.UnitDeparted,
+                        squadId = this.squadId
                     }
                 );
             }
@@ -97,7 +101,8 @@ public class Unit : MonoBehaviour
                         new GamePlayEvent()
                         {
                             nodeId = this.pathToFollow[currentIndexOnPath].NodeId,
-                            eventKind = GamePlayEvent.EventKind.UnitArrived
+                            eventKind = GamePlayEvent.EventKind.UnitArrived,
+                            squadId = this.squadId
                         }
                     );
                     this.SetPath(new List<SupplyNetwork.SupplyNode>());
@@ -131,4 +136,6 @@ public class Unit : MonoBehaviour
     {
         this.pathToFollow = path;
     }
+
+    public Guid squadId { get; set; }
 }

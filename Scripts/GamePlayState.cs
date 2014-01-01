@@ -30,10 +30,11 @@ public class GamePlayState : MonoBehaviour
 
     private LevelV0 LevelData;
 
+    public event GamePlayEventDelegates.OrderAddedEventHandler OrderAdded;
+
     // Use this for initialization
     void Start () 
     {
-
         UnityEngine.Object levelV0 = Resources.Load(@"LevelV0");
         GameObject levelV0Object = UnityEngine.Object.Instantiate(levelV0, Vector3.zero, Quaternion.identity) as GameObject;
         this.LevelData = levelV0Object.GetComponent(typeof(LevelV0)) as LevelV0;
@@ -59,9 +60,6 @@ public class GamePlayState : MonoBehaviour
 
         List<Building> buildings = this.LevelData.Buildings;
 
-        // care needs to be taken on *where* we instantiate the supply lines:
-        // note that the SupplyNetwork constructor performs writes to a static class field. 
-        // This isn't preferable, and it's something that should be refactored soon. 
         GamePlayState.supplyLines = new SupplyNetwork(this.blueTeam, this.LevelData);
         foreach(Building building in buildings)
         {
@@ -77,6 +75,16 @@ public class GamePlayState : MonoBehaviour
                 GamePlayState.supplyLines.MarkAsStartingPoint(building.nodeIdsForEntryPoints.First());
             }
         }
+
+        // link up event handlers with the camera. 
+        if(Camera.allCameras.Length != 1)
+        {
+            throw new System.ArgumentException("we only expected one active camera");
+        }
+        
+        Camera activeCamera = Camera.allCameras[0];
+        TopDownCamera camera = activeCamera.GetComponentsInChildren<TopDownCamera>().First() as TopDownCamera;
+        camera.ActionModeButtonPressed += this.ActionModeButtonPressed;
     }
 
     // Update is called once per frame
@@ -177,7 +185,6 @@ public class GamePlayState : MonoBehaviour
         // this function looks at the inputevent, and the current inputstate, to determine
         // any actions to take, as well as transitioning to the next input state. 
         Vector3 worldCoordOfClick = inputEventInfo.worldPosition;
-        Debug.Log ("input event info: " + inputEventInfo.interfaceEvent.ToString());
 
         if( this.CurrentInputState == InputState.BlankState)
         {
@@ -252,7 +259,8 @@ public class GamePlayState : MonoBehaviour
             Debug.Log("Requisition");
             GamePlayState.supplyLines.Requisition(
                     this.LevelData.GetOriginBuilding(),
-                    this.LevelData.GetDestinationBuilding());
+                    this.LevelData.GetDestinationBuilding(),
+                    Guid.NewGuid());
         }
         else if (this.CurrentInputState == InputState.SquadStartDrag)
         {
@@ -267,21 +275,38 @@ public class GamePlayState : MonoBehaviour
                 if (Physics.Raycast(worldCoordsOfClick, (worldCoordsOfClick - inputEventInfo.CameraPosition), out hit, 100f))
                 {
                     Debug.Log("Release mouse on" + hit.collider.gameObject.name);
+
                     Building clickedOnBuilding = null;
 
                     // did our raycast hit a building?
                     if(Building.IsRaycastHittingBuilding(hit.collider.gameObject, ref clickedOnBuilding))
                     {
+                        int startNodeIdOfPath = this.LevelData
+                            .GetBuildingContainingSquadId(GamePlayState.squadIdForStartDrag)
+                            .nodeIdsForEntryPoints
+                            .First();
+
+                        int endNodeIdOfPath = clickedOnBuilding.nodeIdsForEntryPoints.First();
+
+                        // find the building that contains the squad. 
+                        Building buildingWithSelectedSquadInIt = this.LevelData.Buildings.Find( building =>
+                            building.SquadIdsInThisBuilding.Contains(GamePlayState.squadIdForStartDrag) );
+
+                        Vector3 startPositionOfUnit = buildingWithSelectedSquadInIt.GetUnitsInBuilding.GetPositionOfSquad(GamePlayState.squadIdForStartDrag);
+ 
                         Order movementOrder = new Order()
                         { 
                             command = Orders.OrderCommand.MoveOrder,
-                            squadGuid = GamePlayState.squadIdForStartDrag,
-                            targetNode = clickedOnBuilding.nodeIdsForEntryPoints.First()
+                            SquadGuid = GamePlayState.squadIdForStartDrag,
+                            Path = GamePlayState.supplyLines.shortestPath(startNodeIdOfPath,endNodeIdOfPath),
+                            StartPosition = startPositionOfUnit,
+                            EndPosition = clickedOnBuilding.BuildingCenter
                         };
 
                         // now that we've issued an order, clear out the 
                         // field that identifies the unit that the order has been issued to. 
                         GamePlayState.squadIdForStartDrag = Guid.Empty;
+
                         Orders.AddOrder(movementOrder);
                     }
                 }
@@ -318,6 +343,28 @@ public class GamePlayState : MonoBehaviour
         }
 
         EventQueue.RemoveEvents(eventsToRemove);
+    }
+
+    public void ActionModeButtonPressed(int param)
+    {
+        Debug.Log("get this message logged");
+
+        // clear out any existing input state. 
+        this.CurrentInputState = InputState.BlankState;
+        if(this.IntermediateEdge != null)
+        {
+            this.IntermediateEdge.gameObject.SetActive(false);
+        }
+
+        List<Order> orders = Orders.ReadAndClearOrders();
+        orders.ForEach( order =>
+        {
+            GamePlayState.supplyLines.Requisition(
+                order.Path.First(),
+                order.Path[order.Path.Count-1],
+                order.SquadGuid);
+        });
+
     }
 
     public static bool IsBuildingPotentialDestinationForUnit(List<int> doorEntryPointIds)

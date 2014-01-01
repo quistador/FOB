@@ -70,14 +70,14 @@ public class Squad
         {
             switch(this.squadType)
             {
-            case Squad.SquadType.Assault:
-                return "Assault Squad";
-            case Squad.SquadType.Marksman:
-                return "Marksman Squad";
-            case Squad.SquadType.Rifle:
-                return "Rifle Squad";
-            default:
-                return "unspecified squad type!";
+                case Squad.SquadType.Assault:
+                    return "Assault Squad";
+                case Squad.SquadType.Marksman:
+                    return "Marksman Squad";
+                case Squad.SquadType.Rifle:
+                    return "Rifle Squad";
+                default:
+                    return "unspecified squad type!";
             }
 
         }

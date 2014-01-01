@@ -39,8 +39,8 @@ public class SupplyNetwork
                 
                 new GamePlayEvent()
                 {
-                    nodeId = startingPointId ,
-                    id = squad.id,
+                    nodeId = startingPointId,
+                    squadId = squad.id,
                     eventKind = GamePlayEvent.EventKind.UnitArrived
                 }
             ));
@@ -440,16 +440,9 @@ public class SupplyNetwork
         return this.NetworkNodes[id];
     }
 
-    public void Requisition(Building originBuilding, Building destinationBuilding)
+    public void Requisition(int startNodeId, int endNodeId, Guid squadGuid)
     {
-        UnityEngine.Object unitResource = Resources.Load(@"Unit");
-
-        // just take the first door of the selected building right now.  We aren't currently supporting 
-        // multiple doors, this will need to be changed and appropriately refactored at a future point. 
-        int idForDestination = destinationBuilding.nodeIdsForEntryPoints.First();
-        int idForOrigin = originBuilding.nodeIdsForEntryPoints.First();
-        
-        List<int> shortestPath = this.shortestPath(idForOrigin, idForDestination);
+        List<int> shortestPath = this.shortestPath(startNodeId, endNodeId);
 
         List<SupplyNetwork.SupplyNode> shortestPathCoords = shortestPath.Select(nodeId => 
                 new SupplyNetwork.SupplyNode()
@@ -459,9 +452,22 @@ public class SupplyNetwork
                 }).ToList();
 
         Vector3 startPosition = this.NetworkNodes[shortestPath[0]].Position;
+
+        UnityEngine.Object unitResource = Resources.Load(@"Unit");
         GameObject unitTest = UnityEngine.Object.Instantiate( unitResource, startPosition, Quaternion.identity) as GameObject;
         Unit unit = unitTest.GetComponent(typeof(Unit)) as Unit;
-        unit.SetPath(shortestPathCoords);
+        unit.Initialize(squadGuid,shortestPathCoords);
+    }
+
+    public void Requisition(Building originBuilding, Building destinationBuilding, Guid squadGuid)
+    {
+
+        // just take the first door of the selected building right now.  We aren't currently supporting 
+        // multiple doors, this will need to be changed and appropriately refactored at a future point. 
+        int idForDestination = destinationBuilding.nodeIdsForEntryPoints.First();
+        int idForOrigin = originBuilding.nodeIdsForEntryPoints.First();
+
+        Requisition(idForOrigin, idForDestination, squadGuid);
     }
 
     private void InstantiateNodeObject(Vector3 position)

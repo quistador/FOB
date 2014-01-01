@@ -14,10 +14,9 @@ public class GamePlayEvent
 
     public GamePlayEvent()
     {
-        id = Guid.NewGuid();
     }
 
     public int nodeId { get; set; }
     public GamePlayEvent.EventKind eventKind { get; set; }
-    public Guid id { get; set; }
+    public Guid squadId { get; set; }
 }

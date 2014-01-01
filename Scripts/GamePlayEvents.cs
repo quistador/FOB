@@ -55,3 +55,12 @@ public class GamePlayEvents
         Debug.Log(string.Format ("Removing Events from node {0}, count now: {1}",nodeId,Events[nodeId].Count));
     }
 }
+
+/// <summary>
+/// contains event delegate definitions for events. 
+/// </summary>
+namespace GamePlayEventDelegates
+{
+    public delegate void OrderAddedEventHandler(Order sender);
+    public delegate void ActionModeButtonPressedEventHandler(int someParameter);
+}

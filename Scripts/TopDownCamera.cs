@@ -5,9 +5,21 @@ using System.Collections.Generic;
 
 public class TopDownCamera : MonoBehaviour 
 {
+    public event GamePlayEventDelegates.ActionModeButtonPressedEventHandler ActionModeButtonPressed;
+
     private int leftPaneWidth = 100;
     private bool unitPaneShown = false;
+
+    // internal field monitoriing whether or not we are in action mode. 
+    // Unfortunately, this variable isn't part of GamePlayState, care should be taken
+    // that GamePlayState is in action mode if and only if the TopDownCamera.IsActionMode variable is true. 
+    //
+    // Consider refactoring. 
+    private bool IsActionMode = false;
     private List<InputEvent> allEvents;
+
+    private float SecondsSinceActionModeStarted;
+    private float LengthOfActionMode = 20f;
 
     // Use this for initialization
     void Start () 
@@ -18,6 +30,18 @@ public class TopDownCamera : MonoBehaviour
     // Update is called once per frame
     void Update () 
     {
+        if(this.IsActionMode)
+        {
+            // is our action mode timer expired?  if so, 
+            // get out of action mode, go back to command mode.  
+            if(this.SecondsSinceActionModeStarted >= this.LengthOfActionMode)
+            {
+                this.IsActionMode = false;
+            }
+
+            this.SecondsSinceActionModeStarted += Time.deltaTime;
+        }
+
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
 
@@ -97,30 +121,47 @@ public class TopDownCamera : MonoBehaviour
     /// </summary>
     void OnGUI()
     {
-        //GUILayout.BeginArea(new Rect(0,0,this.leftPaneWidth,Screen.width));
-        GUILayout.BeginVertical("box");
-        if(GUILayout.Button ("Go!",new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)}))   
+        // don't display command buttons if the game is in action mode. 
+        if(!this.IsActionMode)
         {
-            /// when the "go!" button is pressed, all orders that have been added to our queue are issued. 
-            EventQueue.AddToEventQueue(new CommandEvent(GamePlayState.GameMode.ActionMode));
-        }
-        if(GUILayout.Button("Waypoint", new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)}))
-        {
-            // enters our game into a state where the user can define supply lines. 
-            EventQueue.AddToEventQueue(new InputEvent(InputEvent.EventType.WaypointButtonPressed));
-        }
-        if(GUILayout.Button ("Requisition",new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)}))   
-        {
-            // enters a game state where the users can issue movement orders to units. 
-            //
-            this.unitPaneShown = !this.unitPaneShown;
+            //GUILayout.BeginArea(new Rect(0,0,this.leftPaneWidth,Screen.width));
+            GUILayout.BeginVertical("box");
+            if(GUILayout.Button ("Go!",new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)}))   
+            {
+                /// when the "go!" button is pressed, all orders that have been added to our queue are issued. 
+                ActionModeButtonPressed(2);
+                this.IsActionMode = true;
 
-            // NOTE: we are removing this for now, implement the 'ActionMode' state, which 
-            // issues all orders to units instead.  
-            //EventQueue.AddToEventQueue(new CommandEvent(GamePlayState.GameMode.OrderUnitMovementMode));
+                // reset our action mode timer to zero. 
+                this.SecondsSinceActionModeStarted = 0f;
+            }
+            if(GUILayout.Button("Waypoint", new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)}))
+            {
+                // enters our game into a state where the user can define supply lines. 
+                EventQueue.AddToEventQueue(new InputEvent(InputEvent.EventType.WaypointButtonPressed));
+            }
+            if(GUILayout.Button ("Requisition",new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)}))   
+            {
+                // enters a game state where the users can issue movement orders to units. 
+                //
+                this.unitPaneShown = !this.unitPaneShown;
+
+                // NOTE: we are removing this for now, implement the 'ActionMode' state, which 
+                // issues all orders to units instead.  
+                //EventQueue.AddToEventQueue(new CommandEvent(GamePlayState.GameMode.OrderUnitMovementMode));
+            }
+            GUILayout.EndVertical();
         }
-        GUILayout.EndVertical();
-        //GUILayout.EndArea();
+        else
+        {
+            int seconds = (int)this.SecondsSinceActionModeStarted;
+            string timerString = String.Format("{0}", seconds);
+
+            //instead, if we are in action mode, display and update a countdown timer. 
+            GUILayout.BeginVertical("box");
+            GUILayout.Label(timerString,new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)});
+            GUILayout.EndVertical();
+        }
     }
 
     /// <summary>

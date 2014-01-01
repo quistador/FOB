@@ -11,6 +11,8 @@ public class Orders
         MoveOrder
     }
 
+    public static event GamePlayEventDelegates.OrderAddedEventHandler OrderAdded;
+
     private static List<Order> orders;
 
     public static void AddOrder(Order order)
@@ -20,6 +22,25 @@ public class Orders
             orders = new List<Order>();
         }
         orders.Add(order);
+
+        // notify all our event listeners that an order has been added. 
+        OrderAdded(order);
+    }
+
+    /// <summary>
+    /// Reads and clears all orders.
+    /// </summary>
+    /// <returns>The and clear orders.</returns>
+    public static List<Order> ReadAndClearOrders()
+    {
+        // make a copy of the orders to return.
+        List<Order> returnList = orders.Select(order => order).ToList();
+
+        // clear the orders.  It's expected that the caller of this method
+        // will process all the orders in action mode, and it doesn't make
+        // sense to keep old orders in the queue. 
+        orders.Clear();
+        return returnList;
     }
 }
 
@@ -33,6 +54,8 @@ public class Order
     }
 
     public Orders.OrderCommand command { get; set; }
-    public Guid squadGuid {get; set;}
-    public int targetNode {get; set;}
+    public Guid SquadGuid {get; set;}
+    public List<int> Path {get; set;}
+    public Vector3 StartPosition { get; set; }
+    public Vector3 EndPosition { get; set; }
 }

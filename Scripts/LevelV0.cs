@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ public class LevelV0 : MonoBehaviour
     {
         buildings = new List<Building>();
 
-        Object obj = Resources.Load (@"Building");
+        UnityEngine.Object obj = Resources.Load (@"Building");
         if(obj == null)
         {
             throw new System.ArgumentException("couldn't load building resource");
@@ -204,6 +205,16 @@ public class LevelV0 : MonoBehaviour
                     // make sure that the building keeps a reference to the ids that were created. 
                     building.nodeIdsForEntryPoints = nodeIds;
                 });
+    }
+
+    public Building GetBuildingContainingSquadId(Guid squadId)
+    {
+        Building buildingWithSquadInIt = this.buildings.Single( building =>
+        {
+            return building.SquadIdsInThisBuilding.Contains(squadId);
+        });
+
+        return buildingWithSquadInIt;
     }
 
     public List<Vector3> GetEntryPointPositionsInLevel()

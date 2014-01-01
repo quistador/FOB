@@ -25,7 +25,6 @@ public class Building : MonoBehaviour
     
     private TextMesh UnitCountText;
     private List<Squad> SquadsInBuilding;
-    private int UnitsInBuildingCount = 0;
 
     private UnitsInBuilding SquadsInBuildingChildObject;
 
@@ -79,6 +78,7 @@ public class Building : MonoBehaviour
 
             /// we'll be referencing this child component regularly, so store a local copy. 
             this.SquadsInBuildingChildObject = this.gameObject.GetComponentInChildren<UnitsInBuilding>() as UnitsInBuilding;
+            Orders.OrderAdded += this.SquadsInBuildingChildObject.OnOrderAdded;
         }
         
         if(this.nodeIdsForEntryPoints == null)
@@ -127,7 +127,7 @@ public class Building : MonoBehaviour
             .Where(ev => ev.eventKind == GamePlayEvent.EventKind.UnitArrived).ToList()
             .ForEach( ev =>
                 {
-                    this.SquadsInBuilding.Add (GamePlayState.GetSquadById(ev.id));
+                    this.SquadsInBuilding.Add (GamePlayState.GetSquadById(ev.squadId));
                     unitsArrivedCount++;
                 });
 
@@ -137,22 +137,15 @@ public class Building : MonoBehaviour
             .Where(ev => ev.eventKind == GamePlayEvent.EventKind.UnitDeparted).ToList()
             .ForEach( ev =>
                 {
-                    this.SquadsInBuilding.Remove(GamePlayState.GetSquadById(ev.id));
+                    this.SquadsInBuilding.Remove(GamePlayState.GetSquadById(ev.squadId));
                     unitsDepartedCount++;
                 });
-
-        //int unitsArrivedCount = eventsForThisBuilding.Where( ev => ev.eventKind == GamePlayEvent.EventKind.UnitArrived ).Count();
-        //int unitsDepartedCount = eventsForThisBuilding.Where( ev => ev.eventKind == GamePlayEvent.EventKind.UnitDeparted ).Count ();
-        
-        //this.UnitsInBuildingCount = this.UnitsInBuildingCount - unitsDepartedCount;
         
         // if a unit has arrived in the building, remove the 'unitarrived' event from our
         // event list and do something. 
         if(unitsArrivedCount > 0)
         {
-            //this.UnitsInBuildingCount = this.UnitsInBuildingCount + unitsArrivedCount;
-            this.UnitsInBuildingCount = this.SquadsInBuilding.Count();
-            Debug.Log(this.UnitsInBuildingCount +" unit(s) arrived in building " + this.GetInstanceID() );
+            Debug.Log(this.GetUnitsInBuilding.GetUnitsCount + " unit(s) arrived in building " + this.GetInstanceID() );
         }
         
         if(eventsForThisBuilding.Count > 0 )
@@ -160,7 +153,7 @@ public class Building : MonoBehaviour
             GamePlayEvents.RemoveEvents(eventsForThisBuilding.First().nodeId, eventsForThisBuilding);
         }
 
-        this.UnitCountText.text = String.Format ("Units: {0}", this.UnitsInBuildingCount);
+        this.UnitCountText.text = String.Format ("Units: {0}", this.GetUnitsInBuilding.GetUnitsCount);
 
         // our child object is responsible for visually depicting the units, update that field so that 
         // it knows that updates have occurred. 
@@ -198,13 +191,10 @@ public class Building : MonoBehaviour
         // |___________________________|
         //
         // this *will* look weird for certain door positions and this shouldn't be a permanent solution. 
-        MeshCollider collider = this.gameObject.GetComponent<MeshCollider>();
-        Vector3 buildingCenter = collider.bounds.center;
-
         List<Vector3> adjustedDoors = this.EntryPointPositions.Select(door =>
                 {
                     // get the vector from the center to the door. 
-                    Vector3 centerToDoor = buildingCenter - door;
+                    Vector3 centerToDoor = this.BuildingCenter - door;
                     centerToDoor.Normalize();
                     centerToDoor = centerToDoor * 0.01f;
                     return door - centerToDoor;
@@ -272,7 +262,7 @@ public class Building : MonoBehaviour
     { 
         get
         {
-            if(this._Id == null || this._Id == Guid.Empty)
+            if(this._Id == Guid.Empty)
             {
                 this._Id = Guid.NewGuid();
             }
@@ -280,4 +270,27 @@ public class Building : MonoBehaviour
             return _Id;
         }
     }
+
+    /// <summary>
+    /// returns the UnitsInBuilding object (that is responsible for
+    /// tracking and visually depicting the units in this building in a list like format). 
+    /// </summary>
+    public UnitsInBuilding GetUnitsInBuilding
+    {
+        get
+        {
+            return this.SquadsInBuildingChildObject;
+        }
+    }
+
+    public Vector3 BuildingCenter
+    {
+        get
+        {
+            MeshCollider collider = this.gameObject.GetComponent<MeshCollider>();
+            Vector3 buildingCenter = collider.bounds.center;
+            return buildingCenter;
+        }
+    }
+
 }
