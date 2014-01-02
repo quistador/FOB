@@ -54,12 +54,11 @@ public class Building : MonoBehaviour
 
             this._entryPointPositions.Add(doorPosition);
 
-            GameObject doorObject = UnityEngine.Object.Instantiate(
+            UnityEngine.Object.Instantiate(
                     doorResource, 
                     doorPosition, 
-                    Quaternion.identity) as GameObject;
+                    Quaternion.identity);
 
-            Door door = doorObject.GetComponent(typeof(SupplyEdge)) as Door;
             isInitialized = true;
 
             Transform cube = this.transform.FindChild("cube");

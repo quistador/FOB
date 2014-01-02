@@ -22,7 +22,8 @@ public class SupplyEdge : MonoBehaviour
         //this.transform.position = startPos;
         this.startPos = startPos;
         this.endPos = endPos;
-        Mesh plane = PlaneMeshTools.CreatePlane(
+
+        PlaneMeshTools.CreatePlane(
                 1.0f,0.01f,
                 2,2,
                 this.material,
@@ -69,9 +70,6 @@ public class SupplyEdge : MonoBehaviour
 
     public static float calculateScaleForEdge(Vector3 startPos, Vector3 endPos)
     {
-        float x = endPos.x - startPos.x;
-        float y = endPos.y - startPos.y;
-
         float maxEdgeDistance = 0.5f;
         float lengthFromOriginToEndpoint = Math.Min(
                 Vector3.Distance(startPos,endPos),

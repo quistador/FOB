@@ -23,10 +23,11 @@ public class LevelV0 : MonoBehaviour
         }
 
         // create the stone base layer
-        Mesh background;
         GameObject levelBaseLayer = new GameObject("levelBaseLayer");
         levelBaseLayer.transform.position = Vector3.zero;
-        background = PlaneMeshTools.CreatePlane(
+
+        // create the background
+        PlaneMeshTools.CreatePlane(
                 1000f, 1000f,
                 2,2, 
                 material, 
@@ -124,11 +125,12 @@ public class LevelV0 : MonoBehaviour
             buildings.ForEach(b=>b.Start());
             GameObject blockObject = new GameObject("block");
             blockObject.transform.position = currentBlockPosition;
-            Mesh block = PlaneMeshTools.CreatePlane(
+            PlaneMeshTools.CreatePlane(
                     blockWidth,blockWidth,
                     2,2, 
                     cityBlockMaterial, 
                     blockObject);
+
         }
         
         // for our v0 level, we have to specify a starting position somehow (we
@@ -184,7 +186,7 @@ public class LevelV0 : MonoBehaviour
                     }
                 });
         }
-        catch(System.Exception e)
+        catch(System.Exception)
         {
             Debug.Log("exception due to non-singular building colors.  Swallowing this exception until dev progresses...");
         }

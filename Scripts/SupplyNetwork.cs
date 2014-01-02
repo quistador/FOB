@@ -217,17 +217,6 @@ public class SupplyNetwork
         {
             NetworkConnections[endNodeId].Add (startNodeId);
         } 
-
-        /// instaniating these for debugging since the unity debugger doesn't 
-        /// make it easy to look up dictionary values. 
-        SupplyNetwork.SupplyNode debugNodeStart;
-        SupplyNetwork.SupplyNode debugNodeEnd;
-
-        if(this.NetworkNodes.ContainsKey(startNodeId) && this.NetworkNodes.ContainsKey(endNodeId))
-        {
-            debugNodeStart = this.NetworkNodes[startNodeId];
-            debugNodeEnd = this.NetworkNodes[endNodeId]; 
-        }
     }
 
     /// <summary>
@@ -402,9 +391,6 @@ public class SupplyNetwork
     {
         SortedDictionary<float,int> distanceToIdMap = new SortedDictionary<float, int>();
 
-        int keyForNearestNeighbor = 999;
-
-        SupplyNetwork.SupplyNode nearestNode = new SupplyNetwork.SupplyNode(Vector3.zero);
         float minDistance = float.MaxValue;
 
         // nearest neighbor search algorithms are numerous but intricate.  We'll be 
@@ -423,15 +409,11 @@ public class SupplyNetwork
             distanceToIdMap[simplifiedDistance] = nodeKey;
             if(simplifiedDistance < minDistance)
             {
-                nearestNode = node;
                 minDistance = simplifiedDistance;
-                keyForNearestNeighbor = nodeKey;
             }
         }
 
-        var a = distanceToIdMap.Take(numberOfNodes);
         List<int> nearestIds = distanceToIdMap.Take(numberOfNodes).Select( kvp => kvp.Value ).ToList();
-        //Debug.Log(string.Format("calculating nearest neighbor for position {0:F02},{1:F02} = {2:F02},{3:F02}; ID = {4}", position.x,position.y, nearestNode.Position.x,nearestNode.Position.y, nearestIds.First()));
         return nearestIds;
     }
 

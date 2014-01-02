@@ -30,8 +30,6 @@ public class GamePlayState : MonoBehaviour
 
     private LevelV0 LevelData;
 
-    public event GamePlayEventDelegates.OrderAddedEventHandler OrderAdded;
-
     // Use this for initialization
     void Start () 
     {
@@ -55,8 +53,6 @@ public class GamePlayState : MonoBehaviour
         this.CurrentInputState = InputState.BlankState;
     
         this.buildingIdToBuildingInfo = new Dictionary<Guid, Building>();
-  
-        int armyStartingPointNodeId = -1;
 
         List<Building> buildings = this.LevelData.Buildings;
 
@@ -67,8 +63,6 @@ public class GamePlayState : MonoBehaviour
 
             if(building.isStartingPosition)
             {
-                armyStartingPointNodeId = building.nodeIdsForEntryPoints.First();
-
                 // if this building is a starting point for all of our units, then 
                 // we need to let our supply network 'know', so that it knows where to 
                 // position our units in the initial configuration. 
@@ -184,7 +178,6 @@ public class GamePlayState : MonoBehaviour
     {
         // this function looks at the inputevent, and the current inputstate, to determine
         // any actions to take, as well as transitioning to the next input state. 
-        Vector3 worldCoordOfClick = inputEventInfo.worldPosition;
 
         if( this.CurrentInputState == InputState.BlankState)
         {

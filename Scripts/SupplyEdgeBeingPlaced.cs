@@ -35,8 +35,6 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
                 collider.bounds.extents.y,
                 10f);
 
-        MeshFilter mesh = this.gameObject.GetComponent<MeshFilter>();
-
         this.gameObject.AddComponent<Rigidbody>();
         Rigidbody rigidBody = this.gameObject.GetComponent<Rigidbody>();
         rigidBody.useGravity = false;
@@ -84,8 +82,6 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
                     mesh.transform.localScale.y, 
                     mesh.transform.localScale.z);
 
-            MeshRenderer meshRenderer = this.gameObject.GetComponent<MeshRenderer>();
-
             this.transform.position = new Vector3(startPos.x,startPos.y, -0.03f);
         }
         catch(Exception)
@@ -108,10 +104,7 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 
         // since other collidable objects exist within the building, we've got to only
         // update our 'isValid' reference when we collide enter/exit with buildings. 
-        //
-        // NOTE: something is wrong with the below code, the spirit is correct but
-        // there's a bug in it. 
-        if(!test.gameObject.name.Contains("BuildingSlotDescriptor"));
+        if(!test.gameObject.name.Contains("BuildingSlotDescriptor"))
         {
             Debug.Log("trigger enter  " + test.gameObject.name);
             this._isValid = false;
@@ -125,10 +118,7 @@ public class SupplyEdgeBeingPlaced : SupplyEdge
 
         // since other collidable objects exist within the building, we've got to only
         // update our 'isValid' reference when we collide enter/exit with buildings. 
-        //
-        // NOTE: something is wrong with the below code, the spirit is correct but
-        // there's a bug in it. 
-        if(!test.gameObject.name.Contains("BuildingSlotDescriptor"));
+        if(!test.gameObject.name.Contains("BuildingSlotDescriptor"))
         {
             Debug.Log("trigger exit  " + test.gameObject.name);
             this._isValid = true;

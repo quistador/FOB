@@ -4,9 +4,21 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
+/// <summary>
+/// Units in building:  manages the visual depiction, and handles clicks on, units 
+/// in this building.  Somewhat coupled with the Building class. 
+/// </summary>
 public class UnitsInBuilding : MonoBehaviour 
 {
+    /// <summary>
+    /// maps SquadIds to DateTime objects.  Used for getting instances to the Squads and also sorting
+    /// the list that is visually displayed on screen. 
+    /// </summary>
     private SortedList<Guid, DateTime> squadsInBuildingSet;
+
+    /// <summary>
+    /// The text slot resource: this is the resource used to instantiate TextSlot GameObject. 
+    /// </summary>
     private UnityEngine.Object textSlotResource;
 
     // Use this for initialization
@@ -19,6 +31,7 @@ public class UnitsInBuilding : MonoBehaviour
         BoxCollider[] colliders = this.GetComponentsInChildren<BoxCollider>() as BoxCollider[];
         this.squads = new List<Squad>();
 
+        // debug rendering of the collider used to display units. 
         foreach(BoxCollider collider in colliders)
         {
             Debug.DrawLine(
@@ -86,8 +99,8 @@ public class UnitsInBuilding : MonoBehaviour
             }
         }
 
+        // debug info drawn to screen. t
         BoxCollider[] colliders = this.GetComponentsInChildren<BoxCollider>() as BoxCollider[];
-
         foreach(BoxCollider collider in colliders)
         {
             Debug.DrawLine(
@@ -96,14 +109,9 @@ public class UnitsInBuilding : MonoBehaviour
         }
     }
 
-    private List<Squad> _squads;
     public List<Squad> squads 
     { 
-        get { return _squads; }
-        set 
-        { 
-            _squads = value; 
-        } 
+        get; set; 
     }
 
     /// <summary>
@@ -176,13 +184,15 @@ public class UnitsInBuilding : MonoBehaviour
 
             float xScale = (startArrowPosition - endArrowPosition).magnitude;
 
+            // reset to 1 for now, change later. 
+            xScale = 1f;
+
             // scale the arrow along the x axis to stretch it from it's start to destination. 
             previewObject.transform.localScale = new Vector3(
-                previewObject.transform.localScale.x,
+                previewObject.transform.localScale.x * xScale,
                 previewObject.transform.localScale.y,
                 previewObject.transform.localScale.z );
 
-            OrderPreview preview = previewObject.GetComponent(typeof(OrderPreview)) as OrderPreview;
             MeshRenderer previewArrowMesh = previewObject.GetComponentsInChildren(typeof(MeshRenderer)).Single() as MeshRenderer;
 
  

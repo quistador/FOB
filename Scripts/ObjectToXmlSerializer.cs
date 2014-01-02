@@ -58,7 +58,6 @@ public class ObjectToXmlSerializer
     { 
         XmlSerializer xs = new XmlSerializer(typeof(Army)); 
         MemoryStream memoryStream = new MemoryStream(StringToUTF8ByteArray(pXmlizedString)); 
-        XmlTextWriter xmlTextWriter = new XmlTextWriter(memoryStream, Encoding.UTF8); 
         return xs.Deserialize(memoryStream); 
     } 
   
