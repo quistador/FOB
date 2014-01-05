@@ -140,16 +140,6 @@ public class TopDownCamera : MonoBehaviour
                 // enters our game into a state where the user can define supply lines. 
                 EventQueue.AddToEventQueue(new InputEvent(InputEvent.EventType.WaypointButtonPressed));
             }
-            if(GUILayout.Button ("Requisition",new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)}))   
-            {
-                // enters a game state where the users can issue movement orders to units. 
-                //
-                this.unitPaneShown = !this.unitPaneShown;
-
-                // NOTE: we are removing this for now, implement the 'ActionMode' state, which 
-                // issues all orders to units instead.  
-                //EventQueue.AddToEventQueue(new CommandEvent(GamePlayState.GameMode.OrderUnitMovementMode));
-            }
             GUILayout.EndVertical();
         }
         else

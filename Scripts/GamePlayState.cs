@@ -56,7 +56,7 @@ public class GamePlayState : MonoBehaviour
 
         List<Building> buildings = this.LevelData.Buildings;
 
-        GamePlayState.supplyLines = new SupplyNetwork(this.blueTeam, this.LevelData);
+        GamePlayState.supplyLines = new SupplyNetwork(this.blueTeam, this.LevelData, this);
         foreach(Building building in buildings)
         {
             this.buildingIdToBuildingInfo.Add(building.buildingId, building);
@@ -388,5 +388,26 @@ public class GamePlayState : MonoBehaviour
     public Guid GetSquadStartDrag()
     {
         return GamePlayState.squadIdForStartDrag;
+    }
+
+    public void OnUnitArrived(GamePlayEvent eventInfo)
+    {       
+        Building arrivalBuilding = this.LevelData.Buildings.Single(building =>
+                building.nodeIdsForEntryPoints.Contains(eventInfo.nodeId)
+            );
+
+        arrivalBuilding.HandleUnitArrived(eventInfo);
+        Debug.Log("unit arrived!!!!");
+    }
+
+    public void OnUnitDeparted(GamePlayEvent eventInfo)
+    {
+        Building departureBuilding = this.LevelData.Buildings.Single(building =>
+                building.nodeIdsForEntryPoints.Contains(eventInfo.nodeId)
+            );
+
+        departureBuilding.HandleUnitDeparted(eventInfo);
+
+        Debug.Log("unit departed!!!!");
     }
 }

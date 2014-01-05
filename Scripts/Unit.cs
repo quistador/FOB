@@ -26,6 +26,9 @@ public class Unit : MonoBehaviour
     
     bool justStartingPath = true;
 
+    public event GamePlayEventDelegates.UnitArrivedInBuilding UnitArrivedInBuilding;
+    public event GamePlayEventDelegates.UnitDepartedBuilding UnitDepartedBuilding;
+
     // Use this for initialization
     void Start () 
     {
@@ -40,10 +43,35 @@ public class Unit : MonoBehaviour
         this.MoveUnitAlongSupplyLine();
     }
 
-    public void Initialize(Guid squadId, List<SupplyNetwork.SupplyNode> path)
+    public void Initialize(
+            Guid squadId, 
+            List<SupplyNetwork.SupplyNode> path,
+            GamePlayState eventListenerState)
     {
         this.squadId = squadId;
         this.SetPath(path);
+        this.UnitArrivedInBuilding += eventListenerState.OnUnitArrived;
+        this.UnitDepartedBuilding += eventListenerState.OnUnitDeparted;
+    }
+
+    /// <summary>
+    /// initialization event only called during setup
+    /// when we need to populate the level with starting units in starting positions. 
+    /// </summary>
+    public void InitializeOnGameSetup(
+            int nodeId,
+            Guid squadId,
+            GamePlayState eventListenerState)
+    {
+        this.UnitArrivedInBuilding += eventListenerState.OnUnitArrived;
+
+        this.UnitArrivedInBuilding(
+            new GamePlayEvent()
+            {
+                nodeId = nodeId,
+                eventKind = GamePlayEvent.EventKind.UnitArrived,
+                squadId = squadId
+            });
     }
     
     private void MoveUnitAlongSupplyLine()
@@ -63,15 +91,14 @@ public class Unit : MonoBehaviour
             // our unit exited a building. 
             if(this.justStartingPath == true && currentIndexOnPath == 0)
             {
-                GamePlayEvents.AddEvent( 
-                    this.pathToFollow[currentIndexOnPath].NodeId,
+
+                this.UnitDepartedBuilding( 
                     new GamePlayEvent()
                     {
                         nodeId = this.pathToFollow[currentIndexOnPath].NodeId,
                         eventKind = GamePlayEvent.EventKind.UnitDeparted,
                         squadId = this.squadId
-                    }
-                );
+                    });
             }
 
             // Check and see if we are close enough to our next node. 
@@ -95,16 +122,14 @@ public class Unit : MonoBehaviour
                 // if we are sufficiently close start moving to the next node. 
                 if( distanceToNextNode < threshold )
                 {
-                    // return here.  We don't want the node to continue updating it's position. 
-                    GamePlayEvents.AddEvent( 
-                        this.pathToFollow[currentIndexOnPath].NodeId,
+                    this.UnitArrivedInBuilding(
                         new GamePlayEvent()
                         {
                             nodeId = this.pathToFollow[currentIndexOnPath].NodeId,
                             eventKind = GamePlayEvent.EventKind.UnitArrived,
                             squadId = this.squadId
-                        }
-                    );
+                        });
+
                     this.SetPath(new List<SupplyNetwork.SupplyNode>());
                     this.gameObject.SetActive(false);
                     return;

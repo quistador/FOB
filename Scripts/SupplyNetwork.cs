@@ -12,12 +12,19 @@ public class SupplyNetwork
     private Dictionary<int, List<int>> NetworkConnections;
 
     /// <summary>
+    /// we keep a copy of the game state around so that when units are created
+    /// we can hook up the events that they fire to the GamePlayState object. 
+    /// </summary>
+    private GamePlayState gamePlayState;
+
+    /// <summary>
     /// The network nodes: mapping node ID x to information about the node at x. 
     /// </summary>
     private SortedDictionary<int, SupplyNetwork.SupplyNode> NetworkNodes;
 
-    public SupplyNetwork(Army army, LevelV0 level)
+    public SupplyNetwork(Army army, LevelV0 level, GamePlayState gamePlayState)
     {
+        this.gamePlayState = gamePlayState;
         NetworkNodes = new SortedDictionary<int, SupplyNode>();
         NetworkConnections = new Dictionary<int, List<int>>();
 
@@ -33,17 +40,15 @@ public class SupplyNetwork
         // instead of adding new functions to 'initialize' the units in there initial starting building, 
         // we'll reuse the Event Queue, adding 'unit arrived' events. 
         army.Squads.ForEach( squad =>
-            GamePlayEvents.AddEvent( 
-            
-                startingPointId,
-                
-                new GamePlayEvent()
-                {
-                    nodeId = startingPointId,
-                    squadId = squad.id,
-                    eventKind = GamePlayEvent.EventKind.UnitArrived
-                }
-            ));
+            {
+                UnityEngine.Object unitResource = Resources.Load(@"Unit");
+                GameObject unitTest = UnityEngine.Object.Instantiate( unitResource, Vector3.zero, Quaternion.identity) as GameObject;
+                Unit unit = unitTest.GetComponent(typeof(Unit)) as Unit;
+                unit.InitializeOnGameSetup(startingPointId, squad.id,this.gamePlayState);
+                unit.gameObject.SetActive(false);
+                GameObject.Destroy(unitTest);
+                GameObject.Destroy(unit);
+            });
     } 
 
     /// <summary>
@@ -438,7 +443,7 @@ public class SupplyNetwork
         UnityEngine.Object unitResource = Resources.Load(@"Unit");
         GameObject unitTest = UnityEngine.Object.Instantiate( unitResource, startPosition, Quaternion.identity) as GameObject;
         Unit unit = unitTest.GetComponent(typeof(Unit)) as Unit;
-        unit.Initialize(squadGuid,shortestPathCoords);
+        unit.Initialize(squadGuid,shortestPathCoords, this.gamePlayState);
     }
 
     public void Requisition(Building originBuilding, Building destinationBuilding, Guid squadGuid)

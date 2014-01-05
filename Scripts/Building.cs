@@ -28,6 +28,9 @@ public class Building : MonoBehaviour
 
     private UnitsInBuilding SquadsInBuildingChildObject;
 
+    // used to persist event information when a unit arrives in the building. 
+    private int unitsArrivedCount = 0;
+
     // Use this for initialization
     public void Start () 
     {
@@ -67,6 +70,7 @@ public class Building : MonoBehaviour
                     buildingWidth,
                     cube.transform.localScale.z
                     );
+
             cube.transform.position = new Vector3(
                     cube.transform.position.x + buildingWidth/2,
                     cube.transform.position.y + buildingWidth/2,
@@ -112,44 +116,15 @@ public class Building : MonoBehaviour
             // (no mouseclicks or other things yet)
             return;
         }
- 
-        List<GamePlayEvent> eventsForThisBuilding = new List<GamePlayEvent>();
-        
-        this.nodeIdsForEntryPoints.ForEach(nodeId =>
-        {
-            GamePlayEvents.GetEventsForId(nodeId).ForEach( 
-                    gameEvent => eventsForThisBuilding.Add(gameEvent) );
-        });
-
-        int unitsArrivedCount = 0;
-        eventsForThisBuilding
-            .Where(ev => ev.eventKind == GamePlayEvent.EventKind.UnitArrived).ToList()
-            .ForEach( ev =>
-                {
-                    this.SquadsInBuilding.Add (GamePlayState.GetSquadById(ev.squadId));
-                    unitsArrivedCount++;
-                });
-
-        int unitsDepartedCount = 0;
-
-        eventsForThisBuilding
-            .Where(ev => ev.eventKind == GamePlayEvent.EventKind.UnitDeparted).ToList()
-            .ForEach( ev =>
-                {
-                    this.SquadsInBuilding.Remove(GamePlayState.GetSquadById(ev.squadId));
-                    unitsDepartedCount++;
-                });
         
         // if a unit has arrived in the building, remove the 'unitarrived' event from our
         // event list and do something. 
         if(unitsArrivedCount > 0)
         {
+            // now that we've processed the event in an update cycle, 
+            // reset the count. 
+            unitsArrivedCount = 0;
             Debug.Log(this.GetUnitsInBuilding.GetUnitsCount + " unit(s) arrived in building " + this.GetInstanceID() );
-        }
-        
-        if(eventsForThisBuilding.Count > 0 )
-        {
-            GamePlayEvents.RemoveEvents(eventsForThisBuilding.First().nodeId, eventsForThisBuilding);
         }
 
         this.UnitCountText.text = String.Format ("Units: {0}", this.GetUnitsInBuilding.GetUnitsCount);
@@ -292,4 +267,14 @@ public class Building : MonoBehaviour
         }
     }
 
+    public void HandleUnitArrived(GamePlayEvent ev)
+    {
+        this.unitsArrivedCount++;
+        this.SquadsInBuilding.Add (GamePlayState.GetSquadById(ev.squadId));
+    }
+
+    public void HandleUnitDeparted(GamePlayEvent ev)
+    {
+        this.SquadsInBuilding.Remove(GamePlayState.GetSquadById(ev.squadId));
+    }
 }
