@@ -79,7 +79,6 @@ public class Squad
                 default:
                     return "unspecified squad type!";
             }
-
         }
     }
 }

@@ -77,7 +77,7 @@ public class TopDownCamera : MonoBehaviour
                 // Gameplaystate will then store another static list of the IDs of all building that are connected to that building. 
                 // in each building update stage, they will render themselves as a possible target after checking the static connected building ID list. 
                 Debug.Log("Clicked on" + hit.collider.gameObject.name);
-                Squad clickedOnSquadSlot = UnitsInBuilding.getSquadForClick(hit.collider.gameObject);
+                Squad clickedOnSquadSlot = UnitListControl.getSquadForClick(hit.collider.gameObject);
 
                 MeshRenderer mesh = hit.collider.gameObject.GetComponent<MeshRenderer>() as MeshRenderer;
                 if(mesh.material.color == Color.white)
@@ -112,8 +112,8 @@ public class TopDownCamera : MonoBehaviour
         }
 
         // draw debug rays for each click. 
-        this.allEvents.ForEach( e => Debug.DrawRay(e.worldPosition, (e.worldPosition - camera.transform.position) * 100.0f, Color.white));
-        this.allEvents.ForEach( e => Debug.DrawLine(e.worldPosition, e.worldPosition + new Vector3(0.1f, 0.1f, 0.0f), Color.red) );
+        //this.allEvents.ForEach( e => Debug.DrawRay(e.worldPosition, (e.worldPosition - camera.transform.position) * 100.0f, Color.white));
+        //this.allEvents.ForEach( e => Debug.DrawLine(e.worldPosition, e.worldPosition + new Vector3(0.1f, 0.1f, 0.0f), Color.red) );
     }
 
     /// <summary>

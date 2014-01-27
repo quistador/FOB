@@ -264,6 +264,9 @@ public class GamePlayState : MonoBehaviour
                 this.CurrentInputState = InputState.BlankState;
                 RaycastHit hit;
 
+                Vector3 cameraPositionAtTimeOfRelease = inputEventInfo.CameraPosition;
+                Debug.DrawRay(worldCoordsOfClick, (worldCoordsOfClick - cameraPositionAtTimeOfRelease ));
+
                 /// did the mouse release land on a building?
                 if (Physics.Raycast(worldCoordsOfClick, (worldCoordsOfClick - inputEventInfo.CameraPosition), out hit, 100f))
                 {

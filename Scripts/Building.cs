@@ -26,7 +26,7 @@ public class Building : MonoBehaviour
     private TextMesh UnitCountText;
     private List<Squad> SquadsInBuilding;
 
-    private UnitsInBuilding SquadsInBuildingChildObject;
+    private UnitListControl SquadsInBuildingChildObject;
 
     // used to persist event information when a unit arrives in the building. 
     private int unitsArrivedCount = 0;
@@ -80,7 +80,7 @@ public class Building : MonoBehaviour
             SquadsInBuilding = new List<Squad>();
 
             /// we'll be referencing this child component regularly, so store a local copy. 
-            this.SquadsInBuildingChildObject = this.gameObject.GetComponentInChildren<UnitsInBuilding>() as UnitsInBuilding;
+            this.SquadsInBuildingChildObject = this.gameObject.GetComponentInChildren<UnitListControl>() as UnitListControl;
             Orders.OrderAdded += this.SquadsInBuildingChildObject.OnOrderAdded;
         }
         
@@ -246,10 +246,10 @@ public class Building : MonoBehaviour
     }
 
     /// <summary>
-    /// returns the UnitsInBuilding object (that is responsible for
+    /// returns the UnitListControl object (that is responsible for
     /// tracking and visually depicting the units in this building in a list like format). 
     /// </summary>
-    public UnitsInBuilding GetUnitsInBuilding
+    public UnitListControl GetUnitsInBuilding
     {
         get
         {
