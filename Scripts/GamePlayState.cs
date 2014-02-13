@@ -142,11 +142,6 @@ public class GamePlayState : MonoBehaviour
         DefineSupplyLine,
 
         /// <summary>
-        /// Orders unit movement
-        /// </summary>
-        OrderUnitMovementMode,
-
-        /// <summary>
         /// Starts drag from a squad to another point. 
         /// </summary>
         SquadStartDrag
@@ -172,6 +167,39 @@ public class GamePlayState : MonoBehaviour
     public Vector3 CurrentMouseWorldCoordinate
     {
         get; set;
+    }
+
+    public List<IHousable> Housables
+    {
+        get
+        {
+            List<IHousable> houses = this.LevelData.Buildings.Cast<IHousable>().ToList();
+
+            // converting all of our network nodes to 'IHousable' is a bit complicated.
+            // Start by querying all gameObjects tagged with 'SupplyNode'. 
+            // then, call 'GetComponent' on the game object to get the TacticsGame.SupplyNode, 
+            // then cast it to an IHousable.
+            GameObject[] supplyNodesObjects = GameObject.FindGameObjectsWithTag("SupplyNode");
+            List<TacticsGame.SupplyNode> supplyNodes = new List<TacticsGame.SupplyNode>();
+            foreach(GameObject obj in supplyNodesObjects)
+            {
+                TacticsGame.SupplyNode[] nodes = obj.GetComponentsInChildren<TacticsGame.SupplyNode>() as TacticsGame.SupplyNode[];
+
+                // not sure why but there appears to be an object that's tagged with 'SupplyNode' that
+                // doesn't have a supplyNode component on it.  Until I figure out why, I'll need to perform this check
+                if(nodes.Length == 1)
+                {
+                    supplyNodes.Add (nodes.First());
+                }
+                else
+                {
+                    Debug.Log("we expect each supplynode to have a respective component");
+                }
+            }
+            List<IHousable> HousableNodes = supplyNodes.Cast<IHousable>().ToList();
+            houses.AddRange(HousableNodes);
+            return houses;
+        }
     }
 
     public void DelegateInputEvent(InputEvent inputEventInfo)
@@ -246,15 +274,6 @@ public class GamePlayState : MonoBehaviour
                 }
             }
         }
-        else if (this.CurrentInputState == InputState.OrderUnitMovementMode)
-        {
-            this.IntermediateEdge.gameObject.SetActive(false);
-            Debug.Log("Requisition");
-            GamePlayState.supplyLines.Requisition(
-                    this.LevelData.GetOriginBuilding(),
-                    this.LevelData.GetDestinationBuilding(),
-                    Guid.NewGuid());
-        }
         else if (this.CurrentInputState == InputState.SquadStartDrag)
         {
             if(inputEventInfo.interfaceEvent == InputEvent.EventType.ReleasesMouseDown)
@@ -267,42 +286,62 @@ public class GamePlayState : MonoBehaviour
                 Vector3 cameraPositionAtTimeOfRelease = inputEventInfo.CameraPosition;
                 Debug.DrawRay(worldCoordsOfClick, (worldCoordsOfClick - cameraPositionAtTimeOfRelease ));
 
-                /// did the mouse release land on a building?
+                /// did the mouse release land on a collider?
                 if (Physics.Raycast(worldCoordsOfClick, (worldCoordsOfClick - inputEventInfo.CameraPosition), out hit, 100f))
                 {
                     Debug.Log("Release mouse on" + hit.collider.gameObject.name);
 
                     Building clickedOnBuilding = null;
+                    TacticsGame.SupplyNode clickedOnSupplyNode = null;
+                    bool IsOrderValid = false;
 
-                    // did our raycast hit a building?
-                    if(Building.IsRaycastHittingBuilding(hit.collider.gameObject, ref clickedOnBuilding))
+                    Vector3 startPositionOfUnit = Vector3.zero;
+                    Vector3 endPositionOfUnit = Vector3.zero;
+
+                    // default to obscure value to avoid 'use of uninitialized variable' compilation errors. 
+                    int endNodeIdOfPath = -8008; 
+                    int startNodeIdOfPath = this.LevelData
+                        .GetBuildingContainingSquadId(GamePlayState.squadIdForStartDrag)
+                        .nodeIdsForEntryPoints
+                        .First();
+
+                    // find the building that contains the squad. 
+                    Building buildingWithSelectedSquadInIt = this.LevelData.Buildings.Find( building =>
+                        building.SquadIdsInThisBuilding.Contains(GamePlayState.squadIdForStartDrag) );
+
+
+                    // did the mouse release land on a node?
+                    if(TacticsGame.SupplyNode.IsRaycastHittingSupplyNode(hit.collider.gameObject, ref clickedOnSupplyNode))
                     {
-                        int startNodeIdOfPath = this.LevelData
-                            .GetBuildingContainingSquadId(GamePlayState.squadIdForStartDrag)
-                            .nodeIdsForEntryPoints
-                            .First();
+                        endNodeIdOfPath = clickedOnSupplyNode.nodeId;
+                        startPositionOfUnit = buildingWithSelectedSquadInIt.UnitsInHousing().GetPositionOfSquad(GamePlayState.squadIdForStartDrag);
+                        endPositionOfUnit = clickedOnSupplyNode.transform.position;
+                        IsOrderValid = true;
 
-                        int endNodeIdOfPath = clickedOnBuilding.nodeIdsForEntryPoints.First();
+                    }
+                    // did the mouse release land on a building?
+                    else if(Building.IsRaycastHittingBuilding(hit.collider.gameObject, ref clickedOnBuilding))
+                    {
+                        endNodeIdOfPath = clickedOnBuilding.nodeIdsForEntryPoints.First();
+                        startPositionOfUnit = buildingWithSelectedSquadInIt.UnitsInHousing().GetPositionOfSquad(GamePlayState.squadIdForStartDrag);
+                        endPositionOfUnit = clickedOnBuilding.BuildingCenter;
+                        IsOrderValid = true;
+                    }
 
-                        // find the building that contains the squad. 
-                        Building buildingWithSelectedSquadInIt = this.LevelData.Buildings.Find( building =>
-                            building.SquadIdsInThisBuilding.Contains(GamePlayState.squadIdForStartDrag) );
-
-                        Vector3 startPositionOfUnit = buildingWithSelectedSquadInIt.GetUnitsInBuilding.GetPositionOfSquad(GamePlayState.squadIdForStartDrag);
- 
+                    if(IsOrderValid == true)
+                    {
                         Order movementOrder = new Order()
                         { 
                             command = Orders.OrderCommand.MoveOrder,
                             SquadGuid = GamePlayState.squadIdForStartDrag,
                             Path = GamePlayState.supplyLines.shortestPath(startNodeIdOfPath,endNodeIdOfPath),
                             StartPosition = startPositionOfUnit,
-                            EndPosition = clickedOnBuilding.BuildingCenter
+                            EndPosition = endPositionOfUnit
                         };
 
                         // now that we've issued an order, clear out the 
                         // field that identifies the unit that the order has been issued to. 
                         GamePlayState.squadIdForStartDrag = Guid.Empty;
-
                         Orders.AddOrder(movementOrder);
                     }
                 }
@@ -395,21 +434,22 @@ public class GamePlayState : MonoBehaviour
 
     public void OnUnitArrived(GamePlayEvent eventInfo)
     {       
-        Building arrivalBuilding = this.LevelData.Buildings.Single(building =>
-                building.nodeIdsForEntryPoints.Contains(eventInfo.nodeId)
-            );
+        // new code
+        IHousable arrivalHousing = this.Housables.Single( housing =>
+                housing.ContainsNode(eventInfo.nodeId) );
 
-        arrivalBuilding.HandleUnitArrived(eventInfo);
+        arrivalHousing.HandleUnitArrived(eventInfo);
+
         Debug.Log("unit arrived!!!!");
     }
 
     public void OnUnitDeparted(GamePlayEvent eventInfo)
     {
-        Building departureBuilding = this.LevelData.Buildings.Single(building =>
-                building.nodeIdsForEntryPoints.Contains(eventInfo.nodeId)
-            );
+        // refactored code
+        IHousable departureHousing = this.Housables.Single( housing =>
+                housing.ContainsNode(eventInfo.nodeId) );
 
-        departureBuilding.HandleUnitDeparted(eventInfo);
+        departureHousing.HandleUnitDeparted(eventInfo);
 
         Debug.Log("unit departed!!!!");
     }

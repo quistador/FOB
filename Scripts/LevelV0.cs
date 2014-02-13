@@ -142,56 +142,11 @@ public class LevelV0 : MonoBehaviour
     // Use this for initialization
     void Start () 
     {
-    
     }
 
     // Update is called once per frame
     void Update () 
     {
-    }
-
-    public Building GetDestinationBuilding()
-    {
-        return GetBuildingByColor(Color.cyan);
-    }
-
-    public Building GetOriginBuilding()
-    {
-        return GetBuildingByColor(Color.red);
-    }
-
-    /// <summary>
-    /// Gets the selected building: one building in the level can be 'selected' at any time. 
-    /// this function returns that one building. 
-    /// </summary>
-    /// <returns>
-    /// The selected building.
-    /// </returns>
-    public Building GetBuildingByColor(Color color)
-    {
-        Building returnBuilding = null;
-        try
-        {
-            returnBuilding = buildings.Single(building =>
-                {
-                    MeshRenderer[] meshRenderer = building.GetComponentsInChildren<MeshRenderer>() as MeshRenderer[];
-                    Color buildingColor = meshRenderer[1].material.color;
-                    if(buildingColor.Equals(color))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                });
-        }
-        catch(System.Exception)
-        {
-            Debug.Log("exception due to non-singular building colors.  Swallowing this exception until dev progresses...");
-        }
-
-        return returnBuilding;
     }
 
     public void AddBuildingEntryPointsToNetwork(SupplyNetwork network)

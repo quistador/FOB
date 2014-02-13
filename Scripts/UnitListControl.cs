@@ -109,6 +109,9 @@ public class UnitListControl : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// the list of squads that are contained in this UnitListControl.  Add or remove them using this field. 
+    /// </summary>
     public List<Squad> squads 
     { 
         get; set; 

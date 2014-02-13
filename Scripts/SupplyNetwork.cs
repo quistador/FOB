@@ -195,7 +195,7 @@ public class SupplyNetwork
         AddConnection(nearestNodeId[0], newId);
 
         this.InstantiateEdgeObject(nearestNode.Position, endNodePositionTransformed);
-        this.InstantiateNodeObject(endNodePositionTransformed);
+        this.InstantiateNodeObject(endNodePositionTransformed, newId);
         return endNodePositionTransformed;
     }
 
@@ -457,7 +457,7 @@ public class SupplyNetwork
         Requisition(idForOrigin, idForDestination, squadGuid);
     }
 
-    private void InstantiateNodeObject(Vector3 position)
+    private void InstantiateNodeObject(Vector3 position, int newId)
     {
         UnityEngine.Object node = Resources.Load(@"SupplyNode");
 
@@ -466,7 +466,9 @@ public class SupplyNetwork
             throw new System.ArgumentException("prefab not loaded");
         }
 
-        UnityEngine.Object.Instantiate(node, position, Quaternion.identity);
+        GameObject nodeObject = UnityEngine.Object.Instantiate(node, position, Quaternion.identity) as GameObject;
+        TacticsGame.SupplyNode InstantiatedNode = nodeObject.GetComponent(typeof(TacticsGame.SupplyNode)) as TacticsGame.SupplyNode;
+        InstantiatedNode.nodeId = newId;
     }
 
     private void InstantiateEdgeObject(Vector3 startPosition, Vector3 endPosition)

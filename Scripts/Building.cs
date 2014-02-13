@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-public class Building : MonoBehaviour 
+public class Building : MonoBehaviour, IHousable 
 {
     public Material material;
     
@@ -108,6 +108,7 @@ public class Building : MonoBehaviour
             cubeObject.material.color = Color.white;
         }
 
+        // TODO: I think we can remove this event queue stuff, verify as soon as you are free of compilation errors. 
         // check for input events
         List<InputEvent> events = EventQueue.GetEventQueue();
         if(events == null)
@@ -124,10 +125,10 @@ public class Building : MonoBehaviour
             // now that we've processed the event in an update cycle, 
             // reset the count. 
             unitsArrivedCount = 0;
-            Debug.Log(this.GetUnitsInBuilding.GetUnitsCount + " unit(s) arrived in building " + this.GetInstanceID() );
+            Debug.Log(this.UnitsInHousing().GetUnitsCount + " unit(s) arrived in building " + this.GetInstanceID() );
         }
 
-        this.UnitCountText.text = String.Format ("Units: {0}", this.GetUnitsInBuilding.GetUnitsCount);
+        this.UnitCountText.text = String.Format ("Units: {0}", this.UnitsInHousing().GetUnitsCount);
 
         // our child object is responsible for visually depicting the units, update that field so that 
         // it knows that updates have occurred. 
@@ -249,12 +250,9 @@ public class Building : MonoBehaviour
     /// returns the UnitListControl object (that is responsible for
     /// tracking and visually depicting the units in this building in a list like format). 
     /// </summary>
-    public UnitListControl GetUnitsInBuilding
+    public UnitListControl UnitsInHousing()
     {
-        get
-        {
-            return this.SquadsInBuildingChildObject;
-        }
+        return this.SquadsInBuildingChildObject;
     }
 
     public Vector3 BuildingCenter
@@ -276,5 +274,10 @@ public class Building : MonoBehaviour
     public void HandleUnitDeparted(GamePlayEvent ev)
     {
         this.SquadsInBuilding.Remove(GamePlayState.GetSquadById(ev.squadId));
+    }
+
+    public bool ContainsNode(int nodeId)
+    {
+        return this.nodeIdsForEntryPoints.Contains(nodeId);
     }
 }

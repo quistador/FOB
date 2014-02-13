@@ -19,7 +19,7 @@ public class TopDownCamera : MonoBehaviour
     private List<InputEvent> allEvents;
 
     private float SecondsSinceActionModeStarted;
-    private float LengthOfActionMode = 20f;
+    private float LengthOfActionMode = 8f;
 
     // Use this for initialization
     void Start () 
