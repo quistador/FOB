@@ -218,11 +218,11 @@ public class GamePlayState : MonoBehaviour
             else if(inputEventInfo.interfaceEvent == InputEvent.EventType.ClicksOnSquad)
             {
                 // find the building that contains the squad. 
-                Building buildingWithSelectedSquadInIt = this.LevelData.Buildings.Find( building =>
-                    building.SquadIdsInThisBuilding.Contains(GamePlayState.squadIdForStartDrag) );
+                IHousable housingWithSelectedSquadInIt = this.Housables.Find( housable =>
+                    housable.ContainsSquadId(GamePlayState.squadIdForStartDrag) );
 
                 // get all node entry points for that building. 
-                List<int> doorsForBuilding = buildingWithSelectedSquadInIt.nodeIdsForEntryPoints;
+                List<int> doorsForBuilding = housingWithSelectedSquadInIt.NodeIdsInHousing();
                 List<int> buildingIdsForConnectedBuildings = GamePlayState.GetSupplyLines().GetConnectedBuildings( doorsForBuilding );
                 GamePlayState.buildingsConnectedToStartDragBuilding = buildingIdsForConnectedBuildings;
 
@@ -300,21 +300,17 @@ public class GamePlayState : MonoBehaviour
 
                     // default to obscure value to avoid 'use of uninitialized variable' compilation errors. 
                     int endNodeIdOfPath = -8008; 
-                    int startNodeIdOfPath = this.LevelData
-                        .GetBuildingContainingSquadId(GamePlayState.squadIdForStartDrag)
-                        .nodeIdsForEntryPoints
-                        .First();
 
-                    // find the building that contains the squad. 
-                    Building buildingWithSelectedSquadInIt = this.LevelData.Buildings.Find( building =>
-                        building.SquadIdsInThisBuilding.Contains(GamePlayState.squadIdForStartDrag) );
-
+                    // find the housing that contains the squad. 
+                    IHousable housingWithSelectedSquadInIt = this.Housables.Find( housing =>
+                        housing.ContainsSquadId(GamePlayState.squadIdForStartDrag) );
+                    int startNodeIdOfPath = housingWithSelectedSquadInIt.NodeIdsInHousing().First();
 
                     // did the mouse release land on a node?
                     if(TacticsGame.SupplyNode.IsRaycastHittingSupplyNode(hit.collider.gameObject, ref clickedOnSupplyNode))
                     {
                         endNodeIdOfPath = clickedOnSupplyNode.nodeId;
-                        startPositionOfUnit = buildingWithSelectedSquadInIt.UnitsInHousing().GetPositionOfSquad(GamePlayState.squadIdForStartDrag);
+                        startPositionOfUnit = housingWithSelectedSquadInIt.UnitsInHousing().GetPositionOfSquad(GamePlayState.squadIdForStartDrag);
                         endPositionOfUnit = clickedOnSupplyNode.transform.position;
                         IsOrderValid = true;
 
@@ -323,7 +319,7 @@ public class GamePlayState : MonoBehaviour
                     else if(Building.IsRaycastHittingBuilding(hit.collider.gameObject, ref clickedOnBuilding))
                     {
                         endNodeIdOfPath = clickedOnBuilding.nodeIdsForEntryPoints.First();
-                        startPositionOfUnit = buildingWithSelectedSquadInIt.UnitsInHousing().GetPositionOfSquad(GamePlayState.squadIdForStartDrag);
+                        startPositionOfUnit = housingWithSelectedSquadInIt.UnitsInHousing().GetPositionOfSquad(GamePlayState.squadIdForStartDrag);
                         endPositionOfUnit = clickedOnBuilding.BuildingCenter;
                         IsOrderValid = true;
                     }

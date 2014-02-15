@@ -48,6 +48,12 @@ namespace TacticsGame
             return (this.nodeId == nodeId);
         }
 
+        public bool ContainsSquadId(Guid squadId)
+        {
+            List<Guid> squadGuids = this.SquadsInNode.Select( squad => squad.id).ToList();
+            return (squadGuids.Contains(squadId));
+        }
+
         public void HandleUnitDeparted(GamePlayEvent ev)
         {
             this.SquadsInNode.Remove(GamePlayState.GetSquadById(ev.squadId));
@@ -65,6 +71,15 @@ namespace TacticsGame
         public UnitListControl UnitsInHousing()
         {
             return this.SquadsInNodeChildObject;
+        }
+
+        public List<int> NodeIdsInHousing()
+        {
+            // supplynodes only have one node id in their 'housing', just return it 
+            // in a size one list. 
+            List<int> returnValue = new List<int>();
+            returnValue.Add(this.nodeId);
+            return returnValue;
         }
 
         public int nodeId { get; set; }

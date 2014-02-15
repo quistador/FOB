@@ -84,7 +84,7 @@ public class Building : MonoBehaviour, IHousable
             Orders.OrderAdded += this.SquadsInBuildingChildObject.OnOrderAdded;
         }
         
-        if(this.nodeIdsForEntryPoints == null)
+        if(this.NodeIdsInHousing() == null)
         {
             this.nodeIdsForEntryPoints = new List<int>();
         }
@@ -99,33 +99,13 @@ public class Building : MonoBehaviour, IHousable
         // is the user dragging a unit around, potentially targetting this
         // building as a destination? if so, we need to 
         // update the color of this building so that the user knows it's a valid location. 
-        if(GamePlayState.IsBuildingPotentialDestinationForUnit(this.nodeIdsForEntryPoints))
+        if(GamePlayState.IsBuildingPotentialDestinationForUnit(this.NodeIdsInHousing()))
         {
             cubeObject.material.color = Color.green;
         }
         else
         {
             cubeObject.material.color = Color.white;
-        }
-
-        // TODO: I think we can remove this event queue stuff, verify as soon as you are free of compilation errors. 
-        // check for input events
-        List<InputEvent> events = EventQueue.GetEventQueue();
-        if(events == null)
-        { 
-            // if events isn't set, then there's simply nothing to do here. 
-            // (no mouseclicks or other things yet)
-            return;
-        }
-        
-        // if a unit has arrived in the building, remove the 'unitarrived' event from our
-        // event list and do something. 
-        if(unitsArrivedCount > 0)
-        {
-            // now that we've processed the event in an update cycle, 
-            // reset the count. 
-            unitsArrivedCount = 0;
-            Debug.Log(this.UnitsInHousing().GetUnitsCount + " unit(s) arrived in building " + this.GetInstanceID() );
         }
 
         this.UnitCountText.text = String.Format ("Units: {0}", this.UnitsInHousing().GetUnitsCount);
@@ -183,6 +163,11 @@ public class Building : MonoBehaviour, IHousable
     /// we need to be able to reference node Ids in the network that 
     /// </summary>
     public List<int> nodeIdsForEntryPoints{ get; set; }
+
+    public List<int> NodeIdsInHousing()
+    {
+        return this.nodeIdsForEntryPoints;
+    }
 
     public Bounds AxisAlignedBoundingBox()
     {
@@ -278,6 +263,12 @@ public class Building : MonoBehaviour, IHousable
 
     public bool ContainsNode(int nodeId)
     {
-        return this.nodeIdsForEntryPoints.Contains(nodeId);
+        return this.NodeIdsInHousing().Contains(nodeId);
+    }
+
+    public bool ContainsSquadId(Guid squadId)
+    {
+        List<Guid> squadGuids = SquadsInBuilding.Select( squad => squad.id).ToList();
+        return (squadGuids.Contains(squadId));
     }
 }
