@@ -34,6 +34,8 @@ public class Unit : MonoBehaviour
     {
         destinationPosition = new Vector2(0f,0f);
         currentIndexOnPath = 0;
+
+        BoxCollider[] colliders = this.GetComponentsInChildren<BoxCollider>() as BoxCollider[];
     }
 
     // Update is called once per frame
@@ -52,6 +54,10 @@ public class Unit : MonoBehaviour
         this.SetPath(path);
         this.UnitArrivedInBuilding += eventListenerState.OnUnitArrived;
         this.UnitDepartedBuilding += eventListenerState.OnUnitDeparted;
+
+        Squad squad = GamePlayState.GetSquadById(squadId);
+        TextMesh squads = this.gameObject.GetComponentInChildren<TextMesh>() as TextMesh;
+        squads.text = squad.squadTypeDisplayName; 
     }
 
     /// <summary>
