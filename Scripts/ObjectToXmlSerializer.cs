@@ -19,7 +19,6 @@ public class ObjectToXmlSerializer
 
     public Army DeserializeUnitsFromFile(string fileName)
     {
-        
         string xml = this.LoadXML(fileName);
         Army units = (Army)this.DeserializeObject(xml);
         return units;

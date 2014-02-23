@@ -121,8 +121,14 @@ public class TopDownCamera : MonoBehaviour
     /// </summary>
     void OnGUI()
     {
+        if(this.IsPaused)
+        {
+            GUILayout.BeginVertical();
+            GUILayout.Label("paused",new GUILayoutOption[]{GUILayout.Width(100), GUILayout.Height(30)});
+            GUILayout.EndVertical();
+        }
         // don't display command buttons if the game is in action mode. 
-        if(!this.IsActionMode)
+        else if(!this.IsActionMode)
         {
             //GUILayout.BeginArea(new Rect(0,0,this.leftPaneWidth,Screen.width));
             GUILayout.BeginVertical("box");
@@ -182,5 +188,20 @@ public class TopDownCamera : MonoBehaviour
         Vector3 untranslatedWorldPoint = activeCamera.ScreenToWorldPoint(screenPointWithZ);
 
         return untranslatedWorldPoint;
+    }
+
+    private bool IsPaused
+    {
+        get; set;
+    }
+
+    public void GamePausedHandler()
+    {
+        this.IsPaused = true;
+    }
+
+    public void GameUnPausedHandler()
+    {
+        this.IsPaused = false;
     }
 }

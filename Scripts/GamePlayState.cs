@@ -25,11 +25,14 @@ public class GamePlayState : MonoBehaviour
     /// </summary>
     private static Dictionary<Guid, Squad> squadIdToSquadInfo;
 
-    public static Guid squadIdForStartDrag = new Guid();
     private static List<int> buildingsConnectedToStartDragBuilding = new List<int>();
 
     private LevelV0 LevelData;
 
+    public static Guid squadIdForStartDrag = new Guid();
+
+    public event GamePlayEventDelegates.GamePaused Paused;
+    public event GamePlayEventDelegates.GameUnPaused UnPaused;
     // Use this for initialization
     void Start () 
     {
@@ -79,6 +82,8 @@ public class GamePlayState : MonoBehaviour
         Camera activeCamera = Camera.allCameras[0];
         TopDownCamera camera = activeCamera.GetComponentsInChildren<TopDownCamera>().First() as TopDownCamera;
         camera.ActionModeButtonPressed += this.ActionModeButtonPressed;
+        this.Paused += camera.GamePausedHandler;
+        this.UnPaused += camera.GameUnPausedHandler;
     }
 
     // Update is called once per frame
@@ -88,6 +93,13 @@ public class GamePlayState : MonoBehaviour
             (float)Input.mousePosition.x, 
             (float)Input.mousePosition.y, 
             0f);
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            togglePause();
+        }
+        
+
 
         this.ProcessInputEvents();
     }
@@ -152,6 +164,11 @@ public class GamePlayState : MonoBehaviour
 
     }
 
+    public bool IsPaused
+    {
+        get; set;
+    }
+
     public InputState CurrentInputState
     {
         get;
@@ -199,6 +216,22 @@ public class GamePlayState : MonoBehaviour
             List<IHousable> HousableNodes = supplyNodes.Cast<IHousable>().ToList();
             houses.AddRange(HousableNodes);
             return houses;
+        }
+    }
+
+    private void togglePause()
+    {
+        if (this.IsPaused == true)
+        {
+            Time.timeScale = 1f;
+            this.IsPaused = false;
+            UnPaused();
+        }
+        else
+        {
+            Time.timeScale = 0f;
+            this.IsPaused = true;
+            Paused();
         }
     }
 

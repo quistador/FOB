@@ -12,4 +12,6 @@ namespace GamePlayEventDelegates
     public delegate void ActionModeButtonPressedEventHandler(int someParameter);
     public delegate void UnitArrivedInBuilding(GamePlayEvent eventInfo);
     public delegate void UnitDepartedBuilding(GamePlayEvent eventInfo);
+    public delegate void GamePaused();
+    public delegate void GameUnPaused();
 }
